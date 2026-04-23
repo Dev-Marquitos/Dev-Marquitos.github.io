@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programación I — Ingeniería Informática</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --neon-cyan: #00f5ff;
+    --neon-green: #39ff14;
+    --neon-pink: #ff2d78;
+    --neon-orange: #ff6b00;
+    --neon-purple: #bf5fff;
+    --dark-bg: #04050f;
+    --dark-card: #080b1a;
+    --dark-mid: #0d1129;
+    --text-bright: #eef2ff;
+    --text-muted: #6b7fa3;
+    --grid-line: rgba(0,245,255,0.06);
+    --glow-cyan: 0 0 20px rgba(0,245,255,0.5), 0 0 60px rgba(0,245,255,0.2);
+    --glow-green: 0 0 20px rgba(57,255,20,0.5), 0 0 60px rgba(57,255,20,0.2);
+    --glow-pink: 0 0 20px rgba(255,45,120,0.5), 0 0 60px rgba(255,45,120,0.2);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--dark-bg);
+    color: var(--text-bright);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CUSTOM CURSOR */
+  .cursor {
+    width: 12px; height: 12px;
+    background: var(--neon-cyan);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s, background 0.2s;
+    box-shadow: var(--glow-cyan);
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1.5px solid rgba(0,245,255,0.5);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none; z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s ease, width 0.2s, height 0.2s;
+  }
+
+  /* CANVAS */
+  #bg-canvas {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0; pointer-events: none;
+    opacity: 0.6;
+  }
+
+  /* GRID OVERLAY */
+  .grid-overlay {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 0 5%;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 70px;
+    background: rgba(4,5,15,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(0,245,255,0.1);
+  }
+  .nav-logo {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.1rem;
+    color: var(--neon-cyan);
+    text-shadow: var(--glow-cyan);
+    letter-spacing: 0.05em;
+  }
+  .nav-logo span { color: var(--neon-green); }
+  .nav-links {
+    display: flex; gap: 2rem; list-style: none;
+  }
+  .nav-links a {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.3s, text-shadow 0.3s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute; bottom: -4px; left: 0;
+    width: 0; height: 1px;
+    background: var(--neon-cyan);
+    transition: width 0.3s;
+  }
+  .nav-links a:hover { color: var(--neon-cyan); text-shadow: var(--glow-cyan); }
+  .nav-links a:hover::after { width: 100%; }
+
+  /* HAMBURGER */
+  .hamburger {
+    display: none; flex-direction: column; gap: 5px;
+    cursor: pointer; padding: 5px;
+  }
+  .hamburger span {
+    display: block; width: 24px; height: 2px;
+    background: var(--neon-cyan); transition: 0.3s;
+  }
+
+  /* SECTIONS BASE */
+  section {
+    position: relative; z-index: 1;
+    padding: 120px 8% 100px;
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+
+  /* REVEAL ANIMATION */
+  .reveal {
+    opacity: 0; transform: translateY(50px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-left {
+    opacity: 0; transform: translateX(-60px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal-left.visible { opacity: 1; transform: translateX(0); }
+  .reveal-right {
+    opacity: 0; transform: translateX(60px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+  /* ===================== HERO ===================== */
+  #hero {
+    min-height: 100vh;
+    align-items: flex-start;
+    padding-top: 140px;
+    background: radial-gradient(ellipse 80% 60% at 60% 30%, rgba(0,245,255,0.06) 0%, transparent 70%);
+  }
+  .hero-badge {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    color: var(--neon-green);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-bottom: 1.5rem;
+    animation: fadeInDown 1s ease both;
+  }
+  .hero-badge::before {
+    content: ''; width: 30px; height: 1px;
+    background: var(--neon-green);
+    box-shadow: var(--glow-green);
+  }
+  h1.hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(3.5rem, 8vw, 7.5rem);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    animation: fadeInUp 1s 0.2s ease both;
+  }
+  .hero-title .line1 { display: block; color: var(--text-bright); }
+  .hero-title .line2 {
+    display: block;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-title .line3 {
+    display: block;
+    color: var(--neon-pink);
+    text-shadow: 0 0 40px rgba(255,45,120,0.4);
+    -webkit-text-stroke: 1px var(--neon-pink);
+    -webkit-text-fill-color: transparent;
+    font-size: clamp(2rem, 5vw, 4.5rem);
+  }
+  .hero-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 1rem;
+    color: var(--text-muted);
+    max-width: 500px;
+    line-height: 1.8;
+    margin: 2rem 0 3rem;
+    animation: fadeInUp 1s 0.4s ease both;
+  }
+  .hero-cta {
+    display: flex; gap: 1.2rem; flex-wrap: wrap;
+    animation: fadeInUp 1s 0.6s ease both;
+  }
+  .btn-primary {
+    background: var(--neon-cyan);
+    color: var(--dark-bg);
+    padding: 14px 32px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    text-transform: uppercase;
+    border: none; cursor: none;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+    transition: box-shadow 0.3s, transform 0.2s;
+    display: inline-block;
+  }
+  .btn-primary:hover {
+    box-shadow: var(--glow-cyan);
+    transform: translateY(-2px);
+  }
+  .btn-outline {
+    border: 1px solid rgba(0,245,255,0.4);
+    color: var(--neon-cyan);
+    padding: 14px 32px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    text-transform: uppercase;
+    cursor: none;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+    transition: all 0.3s;
+    display: inline-block;
+  }
+  .btn-outline:hover {
+    background: rgba(0,245,255,0.08);
+    border-color: var(--neon-cyan);
+    box-shadow: var(--glow-cyan);
+  }
+  .hero-stats {
+    display: flex; gap: 3rem; margin-top: 5rem;
+    animation: fadeInUp 1s 0.8s ease both;
+  }
+  .stat-item { text-align: center; }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.2rem; font-weight: 800;
+    color: var(--neon-cyan);
+    text-shadow: var(--glow-cyan);
+    display: block;
+  }
+  .stat-label {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.7rem; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+
+  /* SCROLLING CODE LINE */
+  .scroll-ticker {
+    position: relative; z-index: 1;
+    overflow: hidden;
+    border-top: 1px solid rgba(0,245,255,0.1);
+    border-bottom: 1px solid rgba(0,245,255,0.1);
+    padding: 12px 0;
+    background: rgba(0,245,255,0.02);
+  }
+  .ticker-track {
+    display: flex; gap: 4rem;
+    animation: ticker 30s linear infinite;
+    white-space: nowrap;
+  }
+  .ticker-track span {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    color: var(--neon-cyan);
+    opacity: 0.5;
+  }
+  .ticker-track .accent { color: var(--neon-green); opacity: 0.6; }
+
+  /* ===================== SECTION HEADERS ===================== */
+  .section-num {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.7rem;
+    color: var(--neon-pink);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1rem;
+  }
+  .section-num::before {
+    content: ''; width: 40px; height: 1px;
+    background: var(--neon-pink);
+    box-shadow: var(--glow-pink);
+  }
+  h2.section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.2rem, 4vw, 3.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin-bottom: 1.5rem;
+  }
+  h2.section-title .accent-cyan { color: var(--neon-cyan); }
+  h2.section-title .accent-green { color: var(--neon-green); }
+  h2.section-title .accent-pink { color: var(--neon-pink); }
+  h2.section-title .accent-purple { color: var(--neon-purple); }
+  h2.section-title .accent-orange { color: var(--neon-orange); }
+
+  .section-desc {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    line-height: 1.9;
+    max-width: 600px;
+    margin-bottom: 3rem;
+  }
+
+  /* ===================== QUÉ ES PROGRAMACIÓN ===================== */
+  #que-es {
+    background: radial-gradient(ellipse 70% 50% at 20% 50%, rgba(57,255,20,0.05) 0%, transparent 70%);
+  }
+  .prog-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem; align-items: center;
+  }
+  .prog-visual {
+    position: relative;
+  }
+  .terminal-box {
+    background: #060a12;
+    border: 1px solid rgba(0,245,255,0.15);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,245,255,0.03);
+  }
+  .terminal-header {
+    background: rgba(0,245,255,0.04);
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid rgba(0,245,255,0.08);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.red { background: #ff5f57; }
+  .dot.yellow { background: #febc2e; }
+  .dot.green { background: #28c840; }
+  .terminal-title {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.7rem; color: var(--text-muted);
+    margin-left: 8px;
+  }
+  .terminal-body {
+    padding: 20px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 2;
+    overflow: hidden;
+  }
+  .t-keyword { color: var(--neon-purple); }
+  .t-func { color: var(--neon-cyan); }
+  .t-str { color: var(--neon-green); }
+  .t-comment { color: #3d5068; }
+  .t-var { color: var(--neon-orange); }
+  .t-num { color: var(--neon-pink); }
+  .t-op { color: var(--text-muted); }
+  .cursor-blink {
+    display: inline-block; width: 8px; height: 14px;
+    background: var(--neon-cyan);
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
+  }
+
+  .definition-cards {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1rem; margin-top: 2rem;
+  }
+  .def-card {
+    background: var(--dark-card);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 1.2rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .def-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%;
+  }
+  .def-card.cyan::before { background: var(--neon-cyan); box-shadow: var(--glow-cyan); }
+  .def-card.green::before { background: var(--neon-green); box-shadow: var(--glow-green); }
+  .def-card.pink::before { background: var(--neon-pink); box-shadow: var(--glow-pink); }
+  .def-card.purple::before { background: var(--neon-purple); }
+  .def-card:hover { transform: translateY(-3px); border-color: rgba(0,245,255,0.15); }
+  .def-card h4 {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem; font-weight: 600;
+    color: var(--neon-cyan); text-transform: uppercase;
+    letter-spacing: 0.1em; margin-bottom: 0.5rem;
+  }
+  .def-card.green h4 { color: var(--neon-green); }
+  .def-card.pink h4 { color: var(--neon-pink); }
+  .def-card.purple h4 { color: var(--neon-purple); }
+  .def-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+
+  /* ===================== ALGORITMO ===================== */
+  #algoritmo {
+    background: radial-gradient(ellipse 60% 50% at 80% 40%, rgba(191,95,255,0.06) 0%, transparent 70%);
+  }
+  .algo-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+  .flowchart {
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+  }
+  .flow-node {
+    padding: 12px 24px; min-width: 200px; text-align: center;
+    font-family: 'Fira Code', monospace; font-size: 0.8rem;
+    letter-spacing: 0.05em; position: relative;
+    transition: transform 0.3s;
+  }
+  .flow-node:hover { transform: scale(1.04); }
+  .flow-node.start, .flow-node.end {
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+    color: var(--dark-bg); font-weight: 600;
+    border-radius: 50px;
+    box-shadow: var(--glow-cyan);
+  }
+  .flow-node.process {
+    background: rgba(0,245,255,0.06);
+    border: 1px solid rgba(0,245,255,0.25);
+    color: var(--text-bright);
+  }
+  .flow-node.decision {
+    background: rgba(255,107,0,0.1);
+    border: 1px solid rgba(255,107,0,0.4);
+    color: var(--neon-orange);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    padding: 24px 40px; min-width: 180px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .flow-arrow {
+    width: 1px; height: 30px;
+    background: linear-gradient(to bottom, rgba(0,245,255,0.4), rgba(0,245,255,0.1));
+    position: relative; margin: 2px 0;
+  }
+  .flow-arrow::after {
+    content: '▼'; position: absolute;
+    bottom: -4px; left: 50%; transform: translateX(-50%);
+    color: var(--neon-cyan); font-size: 8px;
+  }
+  .algo-steps { margin-top: 2rem; }
+  .algo-step {
+    display: flex; gap: 1.2rem; align-items: flex-start;
+    padding: 1.2rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: transform 0.3s;
+  }
+  .algo-step:hover { transform: translateX(8px); }
+  .step-num {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.7rem; font-weight: 600;
+    color: var(--neon-purple);
+    background: rgba(191,95,255,0.1);
+    border: 1px solid rgba(191,95,255,0.3);
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-content h4 {
+    font-size: 0.9rem; font-weight: 600;
+    color: var(--text-bright); margin-bottom: 0.3rem;
+  }
+  .step-content p { font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; }
+
+  /* ===================== LENGUAJES ===================== */
+  #lenguajes {
+    background: radial-gradient(ellipse 60% 50% at 50% 60%, rgba(255,45,120,0.05) 0%, transparent 70%);
+  }
+  .langs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem; margin-top: 3rem;
+  }
+  .lang-card {
+    background: var(--dark-card);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 2rem 1.5rem;
+    position: relative; overflow: hidden;
+    transition: transform 0.4s, border-color 0.3s, box-shadow 0.3s;
+    cursor: none;
+  }
+  .lang-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .lang-card:hover { transform: translateY(-8px); }
+  .lang-card.py:hover { border-color: #3b82f6; box-shadow: 0 20px 40px rgba(59,130,246,0.2); }
+  .lang-card.java:hover { border-color: #f97316; box-shadow: 0 20px 40px rgba(249,115,22,0.2); }
+  .lang-card.c:hover { border-color: #06b6d4; box-shadow: 0 20px 40px rgba(6,182,212,0.2); }
+  .lang-card.js:hover { border-color: #eab308; box-shadow: 0 20px 40px rgba(234,179,8,0.2); }
+  .lang-card.cpp:hover { border-color: #8b5cf6; box-shadow: 0 20px 40px rgba(139,92,246,0.2); }
+  .lang-card.kotlin:hover { border-color: #ec4899; box-shadow: 0 20px 40px rgba(236,72,153,0.2); }
+  .lang-icon {
+    font-size: 2.8rem; margin-bottom: 1rem; display: block;
+    transition: transform 0.3s;
+  }
+  .lang-card:hover .lang-icon { transform: scale(1.2) rotate(-5deg); }
+  .lang-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem; font-weight: 700;
+    color: var(--text-bright); margin-bottom: 0.4rem;
+  }
+  .lang-type {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.68rem; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+  .lang-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.7; }
+  .lang-bar-wrap {
+    margin-top: 1.2rem;
+    height: 3px; background: rgba(255,255,255,0.05);
+    border-radius: 2px; overflow: hidden;
+  }
+  .lang-bar {
+    height: 100%; border-radius: 2px;
+    animation: growBar 2s ease both;
+    animation-play-state: paused;
+  }
+  .lang-card:hover .lang-bar { animation-play-state: running; }
+  .lang-bar.py-bar { width: 92%; background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+  .lang-bar.java-bar { width: 78%; background: linear-gradient(90deg, #f97316, #ef4444); }
+  .lang-bar.c-bar { width: 85%; background: linear-gradient(90deg, #06b6d4, #0ea5e9); }
+  .lang-bar.js-bar { width: 88%; background: linear-gradient(90deg, #eab308, #f97316); }
+  .lang-bar.cpp-bar { width: 80%; background: linear-gradient(90deg, #8b5cf6, #ec4899); }
+  .lang-bar.kotlin-bar { width: 70%; background: linear-gradient(90deg, #ec4899, #8b5cf6); }
+
+  /* ===================== ESTRUCTURAS DE CONTROL ===================== */
+  #estructuras {
+    background: radial-gradient(ellipse 60% 50% at 10% 60%, rgba(0,245,255,0.05) 0%, transparent 70%);
+  }
+  .ctrl-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 4rem; align-items: start; }
+  .ctrl-tabs {
+    display: flex; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap;
+  }
+  .ctrl-tab {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.72rem; padding: 8px 18px;
+    background: transparent;
+    border: 1px solid rgba(0,245,255,0.2);
+    color: var(--text-muted);
+    cursor: none; transition: all 0.3s;
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .ctrl-tab.active, .ctrl-tab:hover {
+    background: rgba(0,245,255,0.08);
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+    box-shadow: var(--glow-cyan);
+  }
+  .ctrl-content { display: none; }
+  .ctrl-content.active { display: block; }
+  .ctrl-info { padding: 2rem 0; }
+  .ctrl-info h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem; font-weight: 700;
+    margin-bottom: 0.8rem; color: var(--neon-cyan);
+  }
+  .ctrl-info p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 1.2rem; }
+  .ctrl-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; }
+  .ctrl-tag {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.68rem; padding: 4px 12px;
+    background: rgba(0,245,255,0.06);
+    border: 1px solid rgba(0,245,255,0.15);
+    color: var(--neon-cyan);
+    border-radius: 2px;
+  }
+  .ctrl-visual-cards { display: flex; flex-direction: column; gap: 1rem; }
+  .ctrl-v-card {
+    background: var(--dark-card);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 1.5rem;
+    transition: border-color 0.3s, transform 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .ctrl-v-card:hover { transform: translateX(6px); border-color: rgba(0,245,255,0.15); }
+  .ctrl-v-card h4 {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem; color: var(--neon-cyan); margin-bottom: 0.4rem;
+  }
+  .ctrl-v-card p { font-size: 0.8rem; color: var(--text-muted); }
+  .ctrl-v-card .glyph {
+    position: absolute; right: 16px; top: 16px;
+    font-family: 'Fira Code', monospace;
+    font-size: 2rem; opacity: 0.08;
+    color: var(--neon-cyan);
+  }
+
+  /* ===================== VARIABLES Y DATOS ===================== */
+  #variables {
+    background: radial-gradient(ellipse 60% 50% at 70% 30%, rgba(57,255,20,0.05) 0%, transparent 70%);
+  }
+  .var-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+  .data-types {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1rem; margin-top: 2rem;
+  }
+  .dt-card {
+    padding: 1.2rem; background: var(--dark-card);
+    border: 1px solid rgba(255,255,255,0.04);
+    transition: transform 0.3s, border-color 0.3s;
+  }
+  .dt-card:hover { transform: translateY(-4px); }
+  .dt-icon { font-size: 1.5rem; margin-bottom: 0.5rem; display: block; }
+  .dt-name {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.82rem; font-weight: 600;
+    color: var(--neon-green); margin-bottom: 0.3rem;
+  }
+  .dt-example { font-family: 'Fira Code', monospace; font-size: 0.72rem; color: var(--text-muted); }
+  .dt-card:nth-child(1) { border-top: 2px solid var(--neon-cyan); }
+  .dt-card:nth-child(2) { border-top: 2px solid var(--neon-green); }
+  .dt-card:nth-child(3) { border-top: 2px solid var(--neon-pink); }
+  .dt-card:nth-child(4) { border-top: 2px solid var(--neon-purple); }
+  .dt-card:nth-child(5) { border-top: 2px solid var(--neon-orange); }
+  .dt-card:nth-child(6) { border-top: 2px solid #06b6d4; }
+  .memory-viz {
+    background: var(--dark-card);
+    border: 1px solid rgba(0,245,255,0.1);
+    padding: 2rem; margin-top: 1rem;
+  }
+  .memory-viz h4 {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem; color: var(--neon-cyan);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 1.5rem;
+  }
+  .mem-row {
+    display: flex; gap: 0; margin-bottom: 0.5rem;
+    align-items: center;
+  }
+  .mem-addr {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.68rem; color: var(--text-muted);
+    width: 80px;
+  }
+  .mem-name {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem; color: var(--neon-orange);
+    width: 80px;
+  }
+  .mem-val {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    background: rgba(0,245,255,0.05);
+    border: 1px solid rgba(0,245,255,0.15);
+    color: var(--neon-green);
+    padding: 4px 12px; flex: 1;
+    text-align: center;
+  }
+  .mem-type {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.65rem; color: var(--neon-purple);
+    width: 60px; text-align: right;
+  }
+
+  /* ===================== PARADIGMAS ===================== */
+  #paradigmas {
+    background: radial-gradient(ellipse 60% 50% at 30% 70%, rgba(255,107,0,0.05) 0%, transparent 70%);
+  }
+  .paradigm-cards {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem; margin-top: 3rem;
+  }
+  .p-card {
+    background: var(--dark-card);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 2rem; position: relative; overflow: hidden;
+    transition: transform 0.4s, border-color 0.3s;
+  }
+  .p-card:hover { transform: translateY(-6px); }
+  .p-card.oo:hover { border-color: rgba(0,245,255,0.3); }
+  .p-card.func:hover { border-color: rgba(57,255,20,0.3); }
+  .p-card.proc:hover { border-color: rgba(255,45,120,0.3); }
+  .p-card.logi:hover { border-color: rgba(191,95,255,0.3); }
+  .p-num {
+    font-family: 'Fira Code', monospace;
+    font-size: 3rem; font-weight: 700;
+    opacity: 0.06; position: absolute;
+    top: 10px; right: 20px;
+    color: var(--neon-cyan);
+  }
+  .p-icon { font-size: 2rem; margin-bottom: 1rem; display: block; }
+  .p-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem; font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .p-card.oo .p-name { color: var(--neon-cyan); }
+  .p-card.func .p-name { color: var(--neon-green); }
+  .p-card.proc .p-name { color: var(--neon-pink); }
+  .p-card.logi .p-name { color: var(--neon-purple); }
+  .p-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.7; }
+  .p-langs { margin-top: 1rem; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .p-lang {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.65rem; padding: 3px 9px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: var(--text-muted); border-radius: 2px;
+  }
+
+  /* ===================== HERRAMIENTAS ===================== */
+  #herramientas {
+    background: radial-gradient(ellipse 60% 50% at 60% 40%, rgba(0,245,255,0.04) 0%, transparent 70%);
+  }
+  .tools-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1.2rem; margin-top: 3rem;
+  }
+  .tool-card {
+    background: var(--dark-card);
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 1.5rem 1.2rem; text-align: center;
+    transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+    cursor: none;
+  }
+  .tool-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0,245,255,0.2);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .tool-icon { font-size: 2.2rem; margin-bottom: 0.8rem; display: block; }
+  .tool-name {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8rem; font-weight: 600;
+    color: var(--text-bright); margin-bottom: 0.3rem;
+  }
+  .tool-cat {
+    font-size: 0.7rem; color: var(--text-muted);
+    font-family: 'Fira Code', monospace;
+  }
+
+  /* ===================== BUENAS PRACTICAS ===================== */
+  #buenas-practicas {
+    background: radial-gradient(ellipse 60% 50% at 50% 80%, rgba(191,95,255,0.05) 0%, transparent 70%);
+  }
+  .practices-list { margin-top: 3rem; }
+  .practice-item {
+    display: grid; grid-template-columns: auto 1fr;
+    gap: 1.5rem; padding: 2rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    align-items: start;
+    transition: transform 0.3s;
+  }
+  .practice-item:hover { transform: translateX(10px); }
+  .practice-num {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.5rem; font-weight: 700;
+    color: rgba(0,245,255,0.15);
+    width: 50px; line-height: 1;
+    padding-top: 4px;
+  }
+  .practice-content h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem; font-weight: 700;
+    color: var(--text-bright); margin-bottom: 0.5rem;
+  }
+  .practice-content p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.7; }
+
+  /* ===================== FOOTER ===================== */
+  footer {
+    position: relative; z-index: 1;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.6));
+    border-top: 1px solid rgba(0,245,255,0.08);
+    padding: 80px 8% 40px;
+  }
+  .footer-top {
+    display: grid; grid-template-columns: 1.5fr 1fr 1fr;
+    gap: 4rem; margin-bottom: 4rem;
+  }
+  .footer-brand .brand-name {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.3rem; color: var(--neon-cyan);
+    text-shadow: var(--glow-cyan);
+    margin-bottom: 1rem; display: block;
+  }
+  .footer-brand p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.8; max-width: 300px; }
+  .footer-col h4 {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--neon-cyan);
+    margin-bottom: 1.2rem;
+  }
+  .footer-col ul { list-style: none; }
+  .footer-col ul li {
+    margin-bottom: 0.6rem;
+  }
+  .footer-col ul li a {
+    font-size: 0.85rem; color: var(--text-muted);
+    text-decoration: none; transition: color 0.3s;
+  }
+  .footer-col ul li a:hover { color: var(--neon-cyan); }
+
+  /* AUTHOR CARD */
+  .author-card {
+    background: var(--dark-card);
+    border: 1px solid rgba(0,245,255,0.12);
+    padding: 2.5rem; margin-bottom: 3rem;
+    position: relative; overflow: hidden;
+    display: grid; grid-template-columns: auto 1fr;
+    gap: 2rem; align-items: center;
+  }
+  .author-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+  }
+  .author-avatar {
+    width: 90px; height: 90px;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800;
+    color: var(--dark-bg); flex-shrink: 0;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  .author-info h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem; font-weight: 800;
+    color: var(--text-bright); margin-bottom: 0.3rem;
+  }
+  .author-info .author-role {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.78rem; color: var(--neon-cyan);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+  .author-details { display: flex; gap: 2rem; flex-wrap: wrap; }
+  .author-detail {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.78rem; color: var(--text-muted);
+  }
+  .author-detail .icon { color: var(--neon-green); }
+
+  .footer-bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.04);
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .footer-copy {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.72rem; color: var(--text-muted);
+  }
+  .footer-copy span { color: var(--neon-cyan); }
+  .footer-tech {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.68rem; color: var(--text-muted);
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeInDown { from { opacity:0; transform: translateY(-20px); } to { opacity:1; transform:none; } }
+  @keyframes fadeInUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform:none; } }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  @keyframes growBar { from { transform:scaleX(0); transform-origin:left; } to { transform:scaleX(1); } }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes scanline {
+    0%{top:-100%} 100%{top:100%}
+  }
+
+  /* SCANLINE EFFECT on terminal */
+  .terminal-box::after {
+    content: '';
+    position: absolute; left: 0; right: 0;
+    height: 2px;
+    background: rgba(0,245,255,0.04);
+    animation: scanline 4s linear infinite;
+    pointer-events: none;
+  }
+  .terminal-box { position: relative; overflow: hidden; }
+
+  /* PARTICLE COUNTER */
+  .type-text { overflow: hidden; border-right: 2px solid var(--neon-cyan); white-space: nowrap; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .prog-grid, .algo-layout, .ctrl-layout, .var-layout { grid-template-columns: 1fr; }
+    .langs-grid { grid-template-columns: 1fr 1fr; }
+    .tools-grid { grid-template-columns: 1fr 1fr; }
+    .paradigm-cards { grid-template-columns: 1fr; }
+    .footer-top { grid-template-columns: 1fr; gap: 2rem; }
+    .hero-stats { gap: 1.5rem; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+    section { padding: 100px 5% 80px; }
+    .author-card { grid-template-columns: 1fr; text-align: center; }
+    .author-details { justify-content: center; }
+  }
+  @media (max-width: 600px) {
+    .langs-grid { grid-template-columns: 1fr; }
+    .data-types { grid-template-columns: 1fr 1fr; }
+    .definition-cards { grid-template-columns: 1fr; }
+  }
+
+  /* GLITCH EFFECT on hover h1 */
+  .hero-title:hover .line2 {
+    animation: glitch 0.3s steps(2) 1;
+  }
+  @keyframes glitch {
+    0%{clip-path:inset(0 0 95% 0)} 20%{clip-path:inset(40% 0 40% 0)}
+    40%{clip-path:inset(70% 0 10% 0)} 60%{clip-path:inset(10% 0 70% 0)}
+    80%{clip-path:inset(95% 0 0 0)} 100%{clip-path:none}
+  }
+
+  /* MOBILE MENU */
+  .mobile-menu {
+    display: none; position: fixed;
+    top: 70px; left: 0; right: 0;
+    background: rgba(4,5,15,0.97);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(0,245,255,0.1);
+    z-index: 99; padding: 1.5rem 5%;
+    flex-direction: column; gap: 1.2rem;
+  }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem; color: var(--text-muted);
+    text-decoration: none; text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .mobile-menu a:hover { color: var(--neon-cyan); }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    position: fixed; top: 70px; left: 0;
+    height: 2px; background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+    z-index: 99; width: 0%;
+    box-shadow: var(--glow-cyan);
+    transition: width 0.1s;
+  }
+
+  /* BACK TO TOP */
+  .back-top {
+    position: fixed; bottom: 30px; right: 30px;
+    width: 44px; height: 44px;
+    background: rgba(0,245,255,0.1);
+    border: 1px solid rgba(0,245,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    cursor: none; z-index: 50;
+    font-size: 1.1rem; color: var(--neon-cyan);
+    transition: all 0.3s; opacity: 0;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    text-decoration: none;
+  }
+  .back-top.show { opacity: 1; }
+  .back-top:hover { background: rgba(0,245,255,0.2); box-shadow: var(--glow-cyan); }
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- CANVAS BG -->
+<canvas id="bg-canvas"></canvas>
+<div class="grid-overlay"></div>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">prog<span>_</span>I<span>.exe</span></div>
+  <ul class="nav-links">
+    <li><a href="#que-es">¿Qué es?</a></li>
+    <li><a href="#algoritmo">Algoritmo</a></li>
+    <li><a href="#lenguajes">Lenguajes</a></li>
+    <li><a href="#estructuras">Estructuras</a></li>
+    <li><a href="#variables">Variables</a></li>
+    <li><a href="#paradigmas">Paradigmas</a></li>
+    <li><a href="#herramientas">Herramientas</a></li>
+    <li><a href="#buenas-practicas">Buenas Prácticas</a></li>
+  </ul>
+  <div class="hamburger" id="hamburger">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#que-es" onclick="closeMobile()">¿Qué es la Programación?</a>
+  <a href="#algoritmo" onclick="closeMobile()">¿Qué es un Algoritmo?</a>
+  <a href="#lenguajes" onclick="closeMobile()">Lenguajes de Programación</a>
+  <a href="#estructuras" onclick="closeMobile()">Estructuras de Control</a>
+  <a href="#variables" onclick="closeMobile()">Variables y Datos</a>
+  <a href="#paradigmas" onclick="closeMobile()">Paradigmas</a>
+  <a href="#herramientas" onclick="closeMobile()">Herramientas</a>
+  <a href="#buenas-practicas" onclick="closeMobile()">Buenas Prácticas</a>
+</div>
+
+<!-- BACK TO TOP -->
+<a href="#hero" class="back-top" id="backTop">↑</a>
+
+<!-- ==================== HERO ==================== -->
+<section id="hero">
+  <div class="hero-badge">// Ingeniería Informática · 2025</div>
+  <h1 class="hero-title">
+    <span class="line1">Bienvenido a</span>
+    <span class="line2">Programación</span>
+    <span class="line3">— I —</span>
+  </h1>
+  <p class="hero-sub">
+    Fundamentos de la computación moderna. Aprende a comunicarte con las máquinas, resolver problemas y construir el futuro digital.
+  </p>
+  <div class="hero-cta">
+    <a href="#que-es" class="btn-primary">Comenzar → </a>
+    <a href="#algoritmo" class="btn-outline">Ver Algoritmos</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-item">
+      <span class="stat-num" data-count="8">0</span>
+      <span class="stat-label">Módulos</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" data-count="6">0</span>
+      <span class="stat-label">Lenguajes</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" data-count="100">0</span>
+      <span class="stat-label">% Práctico</span>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="scroll-ticker">
+  <div class="ticker-track" id="ticker">
+    <span>int x = 10;</span>
+    <span class="accent">print("Hello, World!")</span>
+    <span>for(i=0; i&lt;n; i++)</span>
+    <span class="accent">if (condicion) { ... }</span>
+    <span>function suma(a, b)</span>
+    <span class="accent">return a + b;</span>
+    <span>class Objeto {}</span>
+    <span class="accent">while(true) { break; }</span>
+    <span>float pi = 3.14;</span>
+    <span class="accent">string nombre = "Marco";</span>
+    <span>int x = 10;</span>
+    <span class="accent">print("Hello, World!")</span>
+    <span>for(i=0; i&lt;n; i++)</span>
+    <span class="accent">if (condicion) { ... }</span>
+    <span>function suma(a, b)</span>
+    <span class="accent">return a + b;</span>
+    <span>class Objeto {}</span>
+    <span class="accent">while(true) { break; }</span>
+  </div>
+</div>
+
+<!-- ==================== QUÉ ES PROGRAMACIÓN ==================== -->
+<section id="que-es">
+  <div class="section-num reveal">01 — Fundamento Base</div>
+  <div class="prog-grid">
+    <div class="reveal-left">
+      <h2 class="section-title">¿Qué es la <span class="accent-cyan">Programación</span>?</h2>
+      <p class="section-desc">La programación es el arte y la ciencia de escribir instrucciones precisas para que una computadora ejecute tareas específicas. Es el lenguaje mediante el cual los humanos se comunican con las máquinas.</p>
+      <div class="definition-cards">
+        <div class="def-card cyan reveal" style="transition-delay:0.1s">
+          <h4>Definición</h4>
+          <p>Proceso de diseñar y crear código fuente que una computadora puede ejecutar para resolver problemas.</p>
+        </div>
+        <div class="def-card green reveal" style="transition-delay:0.2s">
+          <h4>Objetivo</h4>
+          <p>Automatizar tareas, procesar información y crear soluciones eficientes a problemas complejos del mundo real.</p>
+        </div>
+        <div class="def-card pink reveal" style="transition-delay:0.3s">
+          <h4>Proceso</h4>
+          <p>Análisis → Diseño → Codificación → Pruebas → Mantenimiento: el ciclo de vida completo de un programa.</p>
+        </div>
+        <div class="def-card purple reveal" style="transition-delay:0.4s">
+          <h4>Importancia</h4>
+          <p>Base de toda la tecnología moderna: apps móviles, inteligencia artificial, sistemas operativos, videojuegos y más.</p>
+        </div>
+      </div>
+    </div>
+    <div class="prog-visual reveal-right">
+      <div class="terminal-box">
+        <div class="terminal-header">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+          <span class="terminal-title">primer_programa.py</span>
+        </div>
+        <div class="terminal-body" id="codeBlock">
+          <span class="t-comment"># Mi primer programa en Python</span><br>
+          <span class="t-keyword">def</span> <span class="t-func">saludar</span>(<span class="t-var">nombre</span>):<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="t-keyword">return</span> <span class="t-str">"¡Hola, "</span> + <span class="t-var">nombre</span> + <span class="t-str">"!"</span><br><br>
+          <span class="t-comment"># Variables del programa</span><br>
+          <span class="t-var">estudiante</span> <span class="t-op">=</span> <span class="t-str">"Marco"</span><br>
+          <span class="t-var">materia</span> <span class="t-op">=</span> <span class="t-str">"Prog-I"</span><br>
+          <span class="t-var">anio</span> <span class="t-op">=</span> <span class="t-num">2025</span><br><br>
+          <span class="t-comment"># Ejecutar función</span><br>
+          <span class="t-func">print</span>(<span class="t-func">saludar</span>(<span class="t-var">estudiante</span>))<br>
+          <span class="t-func">print</span>(<span class="t-str">"Materia:"</span>, <span class="t-var">materia</span>)<br>
+          <span class="t-func">print</span>(<span class="t-str">"Año:"</span>, <span class="t-var">anio</span>)<br>
+          <span class="cursor-blink"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== ALGORITMO ==================== -->
+<section id="algoritmo">
+  <div class="section-num reveal">02 — Lógica y Proceso</div>
+  <div class="algo-layout">
+    <div class="reveal-left">
+      <h2 class="section-title">¿Qué es un <span class="accent-purple">Algoritmo</span>?</h2>
+      <p class="section-desc">Un algoritmo es una secuencia finita, ordenada y precisa de instrucciones que resuelven un problema o realizan una tarea. Son la base del pensamiento computacional.</p>
+      <div class="algo-steps">
+        <div class="algo-step reveal" style="transition-delay:0.1s">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <h4>Entrada (Input)</h4>
+            <p>El algoritmo recibe datos iniciales que serán procesados. Pueden ser cero o más valores de entrada.</p>
+          </div>
+        </div>
+        <div class="algo-step reveal" style="transition-delay:0.2s">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <h4>Proceso</h4>
+            <p>Una serie de pasos bien definidos transforman los datos de entrada según las reglas establecidas.</p>
+          </div>
+        </div>
+        <div class="algo-step reveal" style="transition-delay:0.3s">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <h4>Decisión</h4>
+            <p>Puntos de bifurcación donde el flujo puede cambiar según condiciones evaluadas en tiempo de ejecución.</p>
+          </div>
+        </div>
+        <div class="algo-step reveal" style="transition-delay:0.4s">
+          <div class="step-num">04</div>
+          <div class="step-content">
+            <h4>Salida (Output)</h4>
+            <p>Resultado final del proceso: el algoritmo produce uno o más valores como solución al problema planteado.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="reveal-right">
+      <h3 style="font-family:'Fira Code',monospace; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:2rem;">// Diagrama de Flujo</h3>
+      <div class="flowchart">
+        <div class="flow-node start">▶ INICIO</div>
+        <div class="flow-arrow"></div>
+        <div class="flow-node process">Leer datos de entrada</div>
+        <div class="flow-arrow"></div>
+        <div class="flow-node process">Procesar información</div>
+        <div class="flow-arrow"></div>
+        <div class="flow-node decision">¿Válido?</div>
+        <div class="flow-arrow"></div>
+        <div class="flow-node process">Mostrar resultado</div>
+        <div class="flow-arrow"></div>
+        <div class="flow-node end">■ FIN</div>
+      </div>
+      <div style="margin-top:2rem; background:var(--dark-card); border:1px solid rgba(191,95,255,0.15); padding:1.5rem;">
+        <h4 style="font-family:'Fira Code',monospace; font-size:0.72rem; color:var(--neon-purple); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:1rem;">Propiedades de un buen algoritmo</h4>
+        <div style="display:flex; flex-direction:column; gap:0.6rem;">
+          <div style="display:flex; align-items:center; gap:0.7rem;">
+            <span style="color:var(--neon-green); font-family:'Fira Code',monospace; font-size:0.75rem;">✓</span>
+            <span style="font-size:0.82rem; color:var(--text-muted);">Finito: termina después de un número finito de pasos</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.7rem;">
+            <span style="color:var(--neon-green); font-family:'Fira Code',monospace; font-size:0.75rem;">✓</span>
+            <span style="font-size:0.82rem; color:var(--text-muted);">Definido: cada paso está bien definido y es preciso</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.7rem;">
+            <span style="color:var(--neon-green); font-family:'Fira Code',monospace; font-size:0.75rem;">✓</span>
+            <span style="font-size:0.82rem; color:var(--text-muted);">Eficiente: usa los recursos mínimos necesarios</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.7rem;">
+            <span style="color:var(--neon-green); font-family:'Fira Code',monospace; font-size:0.75rem;">✓</span>
+            <span style="font-size:0.82rem; color:var(--text-muted);">Correcto: produce el resultado esperado siempre</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== LENGUAJES ==================== -->
+<section id="lenguajes">
+  <div class="section-num reveal">03 — Comunicación con la Máquina</div>
+  <div class="reveal">
+    <h2 class="section-title">Lenguajes de <span class="accent-pink">Programación</span></h2>
+    <p class="section-desc">Los lenguajes de programación son sistemas formales diseñados para expresar instrucciones que una computadora puede ejecutar. Cada uno tiene su sintaxis, paradigma y propósito.</p>
+  </div>
+  <div class="langs-grid">
+    <div class="lang-card py reveal" style="transition-delay:0.05s">
+      <span class="lang-icon">🐍</span>
+      <div class="lang-name">Python</div>
+      <div class="lang-type">// Alto nivel · Multiparadigma</div>
+      <p class="lang-desc">El lenguaje más popular para principiantes y profesionales. Sintaxis clara y legible, ideal para IA, análisis de datos y scripting.</p>
+      <div class="lang-bar-wrap"><div class="lang-bar py-bar"></div></div>
+    </div>
+    <div class="lang-card java reveal" style="transition-delay:0.1s">
+      <span class="lang-icon">☕</span>
+      <div class="lang-name">Java</div>
+      <div class="lang-type">// Orientado a Objetos · JVM</div>
+      <p class="lang-desc">Robusto y portable. "Write Once, Run Anywhere". Dominante en aplicaciones empresariales y Android nativo.</p>
+      <div class="lang-bar-wrap"><div class="lang-bar java-bar"></div></div>
+    </div>
+    <div class="lang-card c reveal" style="transition-delay:0.15s">
+      <span class="lang-icon">⚙️</span>
+      <div class="lang-name">C / C</div>
+      <div class="lang-type">// Bajo nivel · Sistemas</div>
+      <p class="lang-desc">La base de la programación moderna. Control total sobre el hardware. Sistemas operativos, drivers y software de alto rendimiento.</p>
+      <div class="lang-bar-wrap"><div class="lang-bar c-bar"></div></div>
+    </div>
+    <div class="lang-card js reveal" style="transition-delay:0.2s">
+      <span class="lang-icon">⚡</span>
+      <div class="lang-name">JavaScript</div>
+      <div class="lang-type">// Web · Frontend & Backend</div>
+      <p class="lang-desc">El lenguaje del navegador. Dinámico e interpretado, domina el desarrollo web tanto en cliente como en servidor con Node.js.</p>
+      <div class="lang-bar-wrap"><div class="lang-bar js-bar"></div></div>
+    </div>
+    <div class="lang-card cpp reveal" style="transition-delay:0.25s">
+      <span class="lang-icon">🔥</span>
+      <div class="lang-name">C++</div>
+      <div class="lang-type">// Alto rendimiento · Sistemas</div>
+      <p class="lang-desc">Extensión de C con OOP. Usado en motores de videojuegos, simulaciones, compiladores y software de tiempo real.</p>
+      <div class="lang-bar-wrap"><div class="lang-bar cpp-bar"></div></div>
+    </div>
+    <div class="lang-card kotlin reveal" style="transition-delay:0.3s">
+      <span class="lang-icon">🎯</span>
+      <div class="lang-name">Kotlin</div>
+      <div class="lang-type">// Moderno · Android · JVM</div>
+      <p class="lang-desc">Sucesor moderno de Java. Conciso, seguro ante nulos y 100% interoperable con Java. El estándar para Android.</p>
+      <div class="lang-bar-wrap"><div class="lang-bar kotlin-bar"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== ESTRUCTURAS DE CONTROL ==================== -->
+<section id="estructuras">
+  <div class="section-num reveal">04 — Flujo del Programa</div>
+  <div class="ctrl-layout">
+    <div>
+      <div class="reveal">
+        <h2 class="section-title">Estructuras de <span class="accent-cyan">Control</span></h2>
+        <p class="section-desc">Las estructuras de control determinan el flujo de ejecución de un programa. Son los mecanismos que permiten tomar decisiones, repetir acciones y organizar el código.</p>
+      </div>
+      <div class="ctrl-tabs reveal">
+        <button class="ctrl-tab active" onclick="showCtrl('cond')">Condicionales</button>
+        <button class="ctrl-tab" onclick="showCtrl('iter')">Iterativas</button>
+        <button class="ctrl-tab" onclick="showCtrl('salto')">Salto</button>
+      </div>
+      <div id="ctrl-cond" class="ctrl-content active">
+        <div class="ctrl-info">
+          <h3>Estructuras Condicionales</h3>
+          <p>Permiten ejecutar bloques de código diferentes según el resultado de una condición booleana. Son la base de la toma de decisiones en programación.</p>
+          <div class="terminal-box" style="margin-top:1rem;">
+            <div class="terminal-header"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+            <div class="terminal-body" style="font-size:0.78rem; line-height:1.9;">
+              <span class="t-keyword">if</span> (nota &gt;= <span class="t-num">70</span>):<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="t-func">print</span>(<span class="t-str">"Aprobado ✓"</span>)<br>
+              <span class="t-keyword">elif</span> (nota &gt;= <span class="t-num">50</span>):<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="t-func">print</span>(<span class="t-str">"Recuperatorio"</span>)<br>
+              <span class="t-keyword">else</span>:<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="t-func">print</span>(<span class="t-str">"Reprobado ✗"</span>)
+            </div>
+          </div>
+          <div class="ctrl-tags">
+            <span class="ctrl-tag">if</span>
+            <span class="ctrl-tag">else if</span>
+            <span class="ctrl-tag">else</span>
+            <span class="ctrl-tag">switch</span>
+          </div>
+        </div>
+      </div>
+      <div id="ctrl-iter" class="ctrl-content">
+        <div class="ctrl-info">
+          <h3>Estructuras Iterativas</h3>
+          <p>Los bucles permiten repetir un bloque de código múltiples veces. Esenciales para procesar colecciones de datos y realizar cálculos repetitivos.</p>
+          <div class="terminal-box" style="margin-top:1rem;">
+            <div class="terminal-header"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+            <div class="terminal-body" style="font-size:0.78rem; line-height:1.9;">
+              <span class="t-comment"># Bucle for</span><br>
+              <span class="t-keyword">for</span> i <span class="t-keyword">in</span> <span class="t-func">range</span>(<span class="t-num">1</span>, <span class="t-num">6</span>):<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="t-func">print</span>(<span class="t-str">f"Iteración {i}"</span>)<br><br>
+              <span class="t-comment"># Bucle while</span><br>
+              <span class="t-var">contador</span> = <span class="t-num">0</span><br>
+              <span class="t-keyword">while</span> contador &lt; <span class="t-num">5</span>:<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;contador += <span class="t-num">1</span>
+            </div>
+          </div>
+          <div class="ctrl-tags">
+            <span class="ctrl-tag">for</span>
+            <span class="ctrl-tag">while</span>
+            <span class="ctrl-tag">do-while</span>
+            <span class="ctrl-tag">foreach</span>
+          </div>
+        </div>
+      </div>
+      <div id="ctrl-salto" class="ctrl-content">
+        <div class="ctrl-info">
+          <h3>Instrucciones de Salto</h3>
+          <p>Alteran el flujo normal de ejecución, permitiendo salir de bucles, continuar con la siguiente iteración o retornar valores de funciones.</p>
+          <div class="terminal-box" style="margin-top:1rem;">
+            <div class="terminal-header"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+            <div class="terminal-body" style="font-size:0.78rem; line-height:1.9;">
+              <span class="t-keyword">for</span> i <span class="t-keyword">in</span> <span class="t-func">range</span>(<span class="t-num">10</span>):<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="t-keyword">if</span> i == <span class="t-num">3</span>: <span class="t-keyword">continue</span> <span class="t-comment"># Salta</span><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="t-keyword">if</span> i == <span class="t-num">7</span>: <span class="t-keyword">break</span> &nbsp;&nbsp;<span class="t-comment"># Sale</span><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="t-func">print</span>(i)<br><br>
+              <span class="t-keyword">def</span> <span class="t-func">funcion</span>():<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="t-keyword">return</span> <span class="t-str">"resultado"</span>
+            </div>
+          </div>
+          <div class="ctrl-tags">
+            <span class="ctrl-tag">break</span>
+            <span class="ctrl-tag">continue</span>
+            <span class="ctrl-tag">return</span>
+            <span class="ctrl-tag">goto</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ctrl-visual-cards">
+      <div class="ctrl-v-card reveal" style="transition-delay:0.1s">
+        <div class="glyph">if</div>
+        <h4>if / else</h4>
+        <p>Bifurcación condicional. Ejecuta código A si la condición es verdadera, código B si es falsa.</p>
+      </div>
+      <div class="ctrl-v-card reveal" style="transition-delay:0.2s">
+        <div class="glyph">for</div>
+        <h4>Bucle for</h4>
+        <p>Itera un número determinado de veces. Ideal cuando se conoce de antemano la cantidad de iteraciones.</p>
+      </div>
+      <div class="ctrl-v-card reveal" style="transition-delay:0.3s">
+        <div class="glyph">⟳</div>
+        <h4>Bucle while</h4>
+        <p>Repite mientras la condición sea verdadera. Número de iteraciones indefinido, depende del estado.</p>
+      </div>
+      <div class="ctrl-v-card reveal" style="transition-delay:0.4s">
+        <div class="glyph">{ }</div>
+        <h4>Bloque de código</h4>
+        <p>Agrupa instrucciones que se ejecutan juntas. Delimita el alcance de variables locales.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== VARIABLES Y DATOS ==================== -->
+<section id="variables">
+  <div class="section-num reveal">05 — Almacenamiento de Información</div>
+  <div class="var-layout">
+    <div>
+      <div class="reveal">
+        <h2 class="section-title">Variables y <span class="accent-green">Datos</span></h2>
+        <p class="section-desc">Las variables son espacios en memoria que almacenan datos que pueden cambiar durante la ejecución. Los tipos de datos definen qué clase de información puede guardar cada variable.</p>
+      </div>
+      <div class="data-types">
+        <div class="dt-card reveal" style="transition-delay:0.05s">
+          <span class="dt-icon">🔢</span>
+          <div class="dt-name">int</div>
+          <div class="dt-example">edad = 20</div>
+        </div>
+        <div class="dt-card reveal" style="transition-delay:0.1s">
+          <span class="dt-icon">🔣</span>
+          <div class="dt-name">float</div>
+          <div class="dt-example">pi = 3.14</div>
+        </div>
+        <div class="dt-card reveal" style="transition-delay:0.15s">
+          <span class="dt-icon">🔤</span>
+          <div class="dt-name">string</div>
+          <div class="dt-example">nombre = "Marco"</div>
+        </div>
+        <div class="dt-card reveal" style="transition-delay:0.2s">
+          <span class="dt-icon">✅</span>
+          <div class="dt-name">bool</div>
+          <div class="dt-example">activo = True</div>
+        </div>
+        <div class="dt-card reveal" style="transition-delay:0.25s">
+          <span class="dt-icon">📋</span>
+          <div class="dt-name">list</div>
+          <div class="dt-example">notas = [7, 8, 9]</div>
+        </div>
+        <div class="dt-card reveal" style="transition-delay:0.3s">
+          <span class="dt-icon">🗂️</span>
+          <div class="dt-name">dict</div>
+          <div class="dt-example">{"key": "val"}</div>
+        </div>
+      </div>
+    </div>
+    <div class="reveal-right">
+      <div class="memory-viz">
+        <h4>// Visualización de Memoria RAM</h4>
+        <div class="mem-row">
+          <span class="mem-addr">0x001A</span>
+          <span class="mem-name">edad</span>
+          <span class="mem-val">20</span>
+          <span class="mem-type">int</span>
+        </div>
+        <div class="mem-row" style="margin-top:0.4rem;">
+          <span class="mem-addr">0x001B</span>
+          <span class="mem-name">nombre</span>
+          <span class="mem-val">"Marco"</span>
+          <span class="mem-type">string</span>
+        </div>
+        <div class="mem-row" style="margin-top:0.4rem;">
+          <span class="mem-addr">0x001C</span>
+          <span class="mem-name">pi</span>
+          <span class="mem-val">3.14159</span>
+          <span class="mem-type">float</span>
+        </div>
+        <div class="mem-row" style="margin-top:0.4rem;">
+          <span class="mem-addr">0x001D</span>
+          <span class="mem-name">activo</span>
+          <span class="mem-val">True</span>
+          <span class="mem-type">bool</span>
+        </div>
+        <div class="mem-row" style="margin-top:0.4rem;">
+          <span class="mem-addr">0x0020</span>
+          <span class="mem-name">notas</span>
+          <span class="mem-val">[7, 8, 9, 10]</span>
+          <span class="mem-type">list</span>
+        </div>
+      </div>
+      <div style="margin-top:1.5rem; background:var(--dark-card); border:1px solid rgba(57,255,20,0.1); padding:1.5rem;">
+        <h4 style="font-family:'Fira Code',monospace; font-size:0.72rem; color:var(--neon-green); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:1rem;">Scope y Alcance</h4>
+        <p style="font-size:0.83rem; color:var(--text-muted); line-height:1.7; margin-bottom:0.8rem;">
+          <strong style="color:var(--text-bright);">Variable Local:</strong> Existe solo dentro del bloque donde fue declarada.
+        </p>
+        <p style="font-size:0.83rem; color:var(--text-muted); line-height:1.7; margin-bottom:0.8rem;">
+          <strong style="color:var(--text-bright);">Variable Global:</strong> Accesible desde cualquier parte del programa.
+        </p>
+        <p style="font-size:0.83rem; color:var(--text-muted); line-height:1.7;">
+          <strong style="color:var(--text-bright);">Constante:</strong> Su valor no puede cambiar durante la ejecución del programa.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== PARADIGMAS ==================== -->
+<section id="paradigmas">
+  <div class="section-num reveal">06 — Estilos de Programar</div>
+  <div class="reveal">
+    <h2 class="section-title">Paradigmas de <span class="accent-orange">Programación</span></h2>
+    <p class="section-desc">Un paradigma de programación es un estilo o filosofía para resolver problemas mediante código. Define cómo se estructura, organiza y ejecuta el programa.</p>
+  </div>
+  <div class="paradigm-cards">
+    <div class="p-card oo reveal" style="transition-delay:0.1s">
+      <div class="p-num">01</div>
+      <span class="p-icon">🏗️</span>
+      <div class="p-name">Orientado a Objetos</div>
+      <p class="p-desc">Organiza el código en objetos que combinan datos (atributos) y comportamientos (métodos). Basado en los principios de encapsulamiento, herencia, polimorfismo y abstracción.</p>
+      <div class="p-langs">
+        <span class="p-lang">Java</span>
+        <span class="p-lang">Python</span>
+        <span class="p-lang">C++</span>
+        <span class="p-lang">C#</span>
+      </div>
+    </div>
+    <div class="p-card func reveal" style="transition-delay:0.2s">
+      <div class="p-num">02</div>
+      <span class="p-icon">⚗️</span>
+      <div class="p-name">Funcional</div>
+      <p class="p-desc">Trata la computación como la evaluación de funciones matemáticas puras. Evita el estado mutable y los efectos secundarios. Ideal para procesamiento de datos y concurrencia.</p>
+      <div class="p-langs">
+        <span class="p-lang">Haskell</span>
+        <span class="p-lang">Scala</span>
+        <span class="p-lang">F#</span>
+        <span class="p-lang">Erlang</span>
+      </div>
+    </div>
+    <div class="p-card proc reveal" style="transition-delay:0.3s">
+      <div class="p-num">03</div>
+      <span class="p-icon">📋</span>
+      <div class="p-name">Imperativo / Procedural</div>
+      <p class="p-desc">Describe la computación como una secuencia de instrucciones que modifican el estado del programa. El más intuitivo: describe paso a paso cómo lograr el resultado.</p>
+      <div class="p-langs">
+        <span class="p-lang">C</span>
+        <span class="p-lang">Pascal</span>
+        <span class="p-lang">BASIC</span>
+        <span class="p-lang">Fortran</span>
+      </div>
+    </div>
+    <div class="p-card logi reveal" style="transition-delay:0.4s">
+      <div class="p-num">04</div>
+      <span class="p-icon">🧠</span>
+      <div class="p-name">Lógico</div>
+      <p class="p-desc">Basado en la lógica formal. El programador declara hechos y reglas; el motor de inferencia deduce conclusiones. Poderoso para IA, pruebas formales y bases de datos.</p>
+      <div class="p-langs">
+        <span class="p-lang">Prolog</span>
+        <span class="p-lang">Datalog</span>
+        <span class="p-lang">Mercury</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== HERRAMIENTAS ==================== -->
+<section id="herramientas">
+  <div class="section-num reveal">07 — El Arsenal del Programador</div>
+  <div class="reveal">
+    <h2 class="section-title">Herramientas <span class="accent-cyan">Esenciales</span></h2>
+    <p class="section-desc">Un programador eficiente conoce y domina las herramientas que potencian su productividad. Desde editores hasta sistemas de control de versiones.</p>
+  </div>
+  <div class="tools-grid">
+    <div class="tool-card reveal" style="transition-delay:0.05s">
+      <span class="tool-icon">🆚</span>
+      <div class="tool-name">VS Code</div>
+      <div class="tool-cat">// Editor de código</div>
+    </div>
+    <div class="tool-card reveal" style="transition-delay:0.1s">
+      <span class="tool-icon">🐙</span>
+      <div class="tool-name">Git & GitHub</div>
+      <div class="tool-cat">// Control de versiones</div>
+    </div>
+    <div class="tool-card reveal" style="transition-delay:0.15s">
+      <span class="tool-icon">🐍</span>
+      <div class="tool-name">PyCharm</div>
+      <div class="tool-cat">// IDE Python</div>
+    </div>
+    <div class="tool-card reveal" style="transition-delay:0.2s">
+      <span class="tool-icon">☕</span>
+      <div class="tool-name">IntelliJ IDEA</div>
+      <div class="tool-cat">// IDE Java</div>
+    </div>
+    <div class="tool-card reveal" style="transition-delay:0.25s">
+      <span class="tool-icon">🐳</span>
+      <div class="tool-name">Docker</div>
+      <div class="tool-cat">// Contenedores</div>
+    </div>
+    <div class="tool-card reveal" style="transition-delay:0.3s">
+      <span class="tool-icon">📓</span>
+      <div class="tool-name">Jupyter</div>
+      <div class="tool-cat">// Notebooks</div>
+    </div>
+    <div class="tool-card reveal" style="transition-delay:0.35s">
+      <span class="tool-icon">🗄️</span>
+      <div class="tool-name">PostgreSQL</div>
+      <div class="tool-cat">// Base de datos</div>
+    </div>
+    <div class="tool-card reveal" style="transition-delay:0.4s">
+      <span class="tool-icon">🔬</span>
+      <div class="tool-name">Postman</div>
+      <div class="tool-cat">// Testing APIs</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== BUENAS PRÁCTICAS ==================== -->
+<section id="buenas-practicas">
+  <div class="section-num reveal">08 — Código de Calidad</div>
+  <div class="reveal">
+    <h2 class="section-title">Buenas <span class="accent-purple">Prácticas</span></h2>
+    <p class="section-desc">Escribir código que funciona es el mínimo. Un buen programador escribe código limpio, legible, mantenible y eficiente que otros puedan entender y mejorar.</p>
+  </div>
+  <div class="practices-list">
+    <div class="practice-item reveal" style="transition-delay:0.05s">
+      <div class="practice-num">01</div>
+      <div class="practice-content">
+        <h3>Nombres descriptivos y semánticos</h3>
+        <p>Usa nombres que comuniquen intención. <code style="font-family:'Fira Code',monospace; color:var(--neon-green); font-size:0.82rem;">calcular_promedio_notas()</code> es infinitamente mejor que <code style="font-family:'Fira Code',monospace; color:var(--neon-pink); font-size:0.82rem;">fn1()</code>. El código se lee más veces de las que se escribe.</p>
+      </div>
+    </div>
+    <div class="practice-item reveal" style="transition-delay:0.1s">
+      <div class="practice-num">02</div>
+      <div class="practice-content">
+        <h3>Principio DRY — Don't Repeat Yourself</h3>
+        <p>Si escribes el mismo código más de una vez, crea una función. La duplicación lleva a inconsistencias y dificulta el mantenimiento a largo plazo del sistema.</p>
+      </div>
+    </div>
+    <div class="practice-item reveal" style="transition-delay:0.15s">
+      <div class="practice-num">03</div>
+      <div class="practice-content">
+        <h3>Comentarios útiles y documentación</h3>
+        <p>Comenta el <em style="color:var(--text-bright);">por qué</em>, no el <em style="color:var(--text-bright);">qué</em>. El código debe ser auto-explicativo; los comentarios explican decisiones de diseño y lógica compleja.</p>
+      </div>
+    </div>
+    <div class="practice-item reveal" style="transition-delay:0.2s">
+      <div class="practice-num">04</div>
+      <div class="practice-content">
+        <h3>Funciones pequeñas y con única responsabilidad</h3>
+        <p>Cada función debe hacer una sola cosa y hacerla bien (Principio SRP). Si tu función tiene más de 20 líneas, probablemente hace demasiado.</p>
+      </div>
+    </div>
+    <div class="practice-item reveal" style="transition-delay:0.25s">
+      <div class="practice-num">05</div>
+      <div class="practice-content">
+        <h3>Control de versiones desde el inicio</h3>
+        <p>Usa Git desde el primer commit. Un historial claro de cambios es invaluable para entender la evolución del proyecto y recuperarse de errores.</p>
+      </div>
+    </div>
+    <div class="practice-item reveal" style="transition-delay:0.3s">
+      <div class="practice-num">06</div>
+      <div class="practice-content">
+        <h3>Testing: prueba antes de que fallen</h3>
+        <p>Un código no probado es código roto esperando a ser descubierto. Las pruebas unitarias y de integración son inversiones en confianza y calidad.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <span class="brand-name">prog_I.exe</span>
+      <p>Material educativo desarrollado para la materia Programación I de la carrera de Ingeniería Informática. Fundamentos sólidos para una carrera brillante en tecnología.</p>
+    </div>
+    <div class="footer-col">
+      <h4>// Navegación</h4>
+      <ul>
+        <li><a href="#que-es">¿Qué es la Programación?</a></li>
+        <li><a href="#algoritmo">¿Qué es un Algoritmo?</a></li>
+        <li><a href="#lenguajes">Lenguajes de Programación</a></li>
+        <li><a href="#estructuras">Estructuras de Control</a></li>
+        <li><a href="#variables">Variables y Datos</a></li>
+        <li><a href="#paradigmas">Paradigmas</a></li>
+        <li><a href="#herramientas">Herramientas</a></li>
+        <li><a href="#buenas-practicas">Buenas Prácticas</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>// Recursos Extra</h4>
+      <ul>
+        <li><a href="#">Python Docs</a></li>
+        <li><a href="#">MDN Web Docs</a></li>
+        <li><a href="#">CS50 — Harvard</a></li>
+        <li><a href="#">LeetCode</a></li>
+        <li><a href="#">GitHub Student</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- AUTHOR CARD -->
+  <div class="author-card reveal">
+    <div class="author-avatar">MC</div>
+    <div class="author-info">
+      <h3>Marco Antonio Calizaya Laura</h3>
+      <div class="author-role">// Estudiante · Ingeniería Informática · 5to Año</div>
+      <div class="author-details">
+        <div class="author-detail">
+          <span class="icon">🎓</span>
+          <span>Ingeniería Informática</span>
+        </div>
+        <div class="author-detail">
+          <span class="icon">📅</span>
+          <span>5to Año de Curso · 2025</span>
+        </div>
+        <div class="author-detail">
+          <span class="icon">📱</span>
+          <span>+591 68405191</span>
+        </div>
+        <div class="author-detail">
+          <span class="icon">⚡</span>
+          <span>Programación I</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="footer-copy">
+      © 2025 <span>Marco Antonio Calizaya Laura</span> · Todos los derechos reservados
+    </div>
+    <div class="footer-tech">
+      Construido con HTML5 · CSS3 · JavaScript · Three.js
+    </div>
+  </div>
+</footer>
+
+<!-- THREE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// ======== THREE.JS BACKGROUND ========
+const canvas = document.getElementById('bg-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.z = 4;
+
+// Particle system
+const particleCount = 1800;
+const positions = new Float32Array(particleCount * 3);
+const colors = new Float32Array(particleCount * 3);
+const speeds = [];
+
+const colorPalette = [
+  [0, 0.96, 1],       // cyan
+  [0.22, 1, 0.08],    // green
+  [1, 0.18, 0.47],    // pink
+  [0.75, 0.37, 1],    // purple
+  [1, 0.42, 0],       // orange
+];
+
+for (let i = 0; i < particleCount; i++) {
+  positions[i*3]   = (Math.random() - 0.5) * 20;
+  positions[i*3+1] = (Math.random() - 0.5) * 20;
+  positions[i*3+2] = (Math.random() - 0.5) * 10;
+  const c = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+  colors[i*3]   = c[0];
+  colors[i*3+1] = c[1];
+  colors[i*3+2] = c[2];
+  speeds.push((Math.random() - 0.5) * 0.004);
+}
+
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+const mat = new THREE.PointsMaterial({
+  size: 0.04,
+  vertexColors: true,
+  transparent: true,
+  opacity: 0.8,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false
+});
+
+const particles = new THREE.Points(geo, mat);
+scene.add(particles);
+
+// Connection lines (sparse)
+const lineGeo = new THREE.BufferGeometry();
+const linePositions = [];
+const lineColors = [];
+for (let i = 0; i < 80; i++) {
+  const a = Math.floor(Math.random() * particleCount);
+  const b = Math.floor(Math.random() * particleCount);
+  linePositions.push(
+    positions[a*3], positions[a*3+1], positions[a*3+2],
+    positions[b*3], positions[b*3+1], positions[b*3+2]
+  );
+  lineColors.push(0, 0.96, 1, 0, 0.96, 1);
+}
+lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+lineGeo.setAttribute('color', new THREE.Float32BufferAttribute(lineColors, 3));
+const lineMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending });
+const lines = new THREE.LineSegments(lineGeo, lineMat);
+scene.add(lines);
+
+let mouseX = 0, mouseY = 0;
+document.addEventListener('mousemove', e => {
+  mouseX = (e.clientX / window.innerWidth - 0.5) * 0.3;
+  mouseY = (e.clientY / window.innerHeight - 0.5) * 0.3;
+});
+
+let t = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  t += 0.005;
+  particles.rotation.y = mouseX * 0.5 + t * 0.05;
+  particles.rotation.x = -mouseY * 0.5 + Math.sin(t * 0.3) * 0.1;
+  lines.rotation.y = particles.rotation.y;
+  lines.rotation.x = particles.rotation.x;
+  // Drift
+  for (let i = 0; i < particleCount; i++) {
+    positions[i*3+1] += speeds[i];
+    if (positions[i*3+1] > 10) positions[i*3+1] = -10;
+    if (positions[i*3+1] < -10) positions[i*3+1] = 10;
+  }
+  geo.attributes.position.needsUpdate = true;
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ======== CUSTOM CURSOR ========
+const cur = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let cx = 0, cy = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  cx = e.clientX; cy = e.clientY;
+  cur.style.left = cx + 'px';
+  cur.style.top = cy + 'px';
+});
+
+function animCursor() {
+  rx += (cx - rx) * 0.12;
+  ry += (cy - ry) * 0.12;
+  ring.style.left = rx + 'px';
+  ring.style.top = ry + 'px';
+  requestAnimationFrame(animCursor);
+}
+animCursor();
+
+document.querySelectorAll('a, button, .lang-card, .tool-card, .p-card').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cur.style.transform = 'translate(-50%,-50%) scale(2)';
+    ring.style.width = '50px'; ring.style.height = '50px';
+  });
+  el.addEventListener('mouseleave', () => {
+    cur.style.transform = 'translate(-50%,-50%) scale(1)';
+    ring.style.width = '36px'; ring.style.height = '36px';
+  });
+});
+
+// ======== SCROLL REVEAL ========
+const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+revealEls.forEach(el => obs.observe(el));
+
+// ======== PROGRESS BAR ========
+const bar = document.getElementById('progressBar');
+window.addEventListener('scroll', () => {
+  const pct = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+  bar.style.width = pct + '%';
+  document.getElementById('backTop').classList.toggle('show', window.scrollY > 400);
+});
+
+// ======== COUNT UP ========
+const countEls = document.querySelectorAll('[data-count]');
+const countObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const target = parseInt(e.target.dataset.count);
+      let current = 0;
+      const step = target / 40;
+      const timer = setInterval(() => {
+        current = Math.min(current + step, target);
+        e.target.textContent = Math.floor(current) + (target === 100 ? '%' : '+');
+        if (current >= target) clearInterval(timer);
+      }, 30);
+      countObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.5 });
+countEls.forEach(el => countObs.observe(el));
+
+// ======== CONTROL TABS ========
+function showCtrl(id) {
+  document.querySelectorAll('.ctrl-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.ctrl-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('ctrl-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ======== MOBILE MENU ========
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+hamburger.addEventListener('click', () => {
+  mobileMenu.classList.toggle('open');
+});
+function closeMobile() {
+  mobileMenu.classList.remove('open');
+}
+
+// ======== TICKER DUPLICATE ========
+const tk = document.getElementById('ticker');
+tk.innerHTML += tk.innerHTML;
+
+// ======== ACTIVE NAV HIGHLIGHT ========
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.getAttribute('id');
+  });
+  navLinks.forEach(a => {
+    a.style.color = a.getAttribute('href') === '#' + current ? 'var(--neon-cyan)' : '';
+  });
+}, { passive: true });
+</script>
+</body>
+</html>
