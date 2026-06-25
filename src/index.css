@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  --color-coal-black: #141414;
+  --color-mine-dark: #222222;
+  --color-rock-gray: #333333;
+  --color-ore-gray: #6B6B6B;
+  --color-phosphor-white: #E8E8E8;
+  --color-radio-red: #E61919;
+  --color-amber-dial: #FFAA00;
+  --color-mine-green: #4AF626;
+
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Inter', system-ui, sans-serif;
+}
+
+:root {
+  background-color: var(--color-coal-black);
+  color: var(--color-phosphor-white);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-coal-black);
+  /* Subtle CRT scanline overlay */
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.015) 2px,
+    rgba(255, 255, 255, 0.015) 4px
+  );
+  background-attachment: fixed;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-coal-black);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-rock-gray);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ore-gray);
+}
+
+/* Brutalist zero border-radius except where explicitly needed */
+button, input, div, section, article, nav, header, footer, a, img {
+  border-radius: 0 !important;
+}
+
+/* Global selection color */
+::selection {
+  background-color: var(--color-radio-red);
+  color: white;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Fonts */
+.font-display {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 900;
+}
+.font-mono {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
