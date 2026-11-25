@@ -3,10 +3,10 @@ import { useFrame, type ThreeElements } from '@react-three/fiber';
 import * as THREE from 'three';
 import { paintedMetalTexture } from '../textures/procedural';
 
-type Props = ThreeElements['group'] & { lit?: boolean };
+type Props = ThreeElements['group'] & { lit?: boolean; lights?: boolean };
 
 /** Guardatojo (casco minero) con lámpara de carburo encendida. */
-export function MinerHelmet({ lit = true, ...props }: Props) {
+export function MinerHelmet({ lit = true, lights = true, ...props }: Props) {
   const flame = useRef<THREE.Mesh>(null);
   const light = useRef<THREE.PointLight>(null);
 
@@ -93,7 +93,7 @@ export function MinerHelmet({ lit = true, ...props }: Props) {
             <mesh position={[0, 0.012, 0.001]} material={mats.flameCore}>
               <sphereGeometry args={[0.01, 8, 8]} />
             </mesh>
-            <pointLight ref={light} position={[0, 0.06, 0.3]} color="#ffb35c" distance={4} decay={2} intensity={1.8} castShadow={false} />
+            {lights && <pointLight ref={light} position={[0, 0.06, 0.3]} color="#ffb35c" distance={4} decay={2} intensity={1.8} castShadow={false} />}
           </group>
         )}
       </group>

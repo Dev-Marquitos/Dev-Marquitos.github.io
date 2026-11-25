@@ -14,9 +14,9 @@ function tubeGeometry() {
   return new THREE.LatheGeometry(pts, 32);
 }
 
-type Props = ThreeElements['group'];
+type Props = ThreeElements['group'] & { lights?: boolean };
 
-export function Transmitter(props: Props) {
+export function Transmitter({ lights = true, ...props }: Props) {
   const needleA = useRef<THREE.Group>(null);
   const needleB = useRef<THREE.Group>(null);
   const pilot = useRef<THREE.MeshStandardMaterial>(null);
@@ -123,7 +123,7 @@ export function Transmitter(props: Props) {
             </mesh>
           </group>
         ))}
-        <pointLight ref={innerLight} position={[0, 0, 0.2]} color="#ff8030" distance={2.2} decay={2} intensity={3} />
+        {lights && <pointLight ref={innerLight} position={[0, 0, 0.2]} color="#ff8030" distance={2.2} decay={2} intensity={3} />}
       </group>
       <mesh position={[0, 0.3, 0.505]} material={mats.glass}>
         <planeGeometry args={[1.14, 0.72]} />

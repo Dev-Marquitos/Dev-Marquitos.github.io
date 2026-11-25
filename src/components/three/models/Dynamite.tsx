@@ -4,10 +4,10 @@ import { Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import { paperWrapTexture } from '../textures/procedural';
 
-type Props = ThreeElements['group'];
+type Props = ThreeElements['group'] & { lights?: boolean; particles?: boolean };
 
 /** Cartuchos de dinamita atados: herramienta de trabajo y símbolo de protesta minera. */
-export function Dynamite(props: Props) {
+export function Dynamite({ lights = true, particles = true, ...props }: Props) {
   const spark = useRef<THREE.PointLight>(null);
   const tip = useRef<THREE.Mesh>(null);
 
@@ -65,8 +65,8 @@ export function Dynamite(props: Props) {
         <mesh ref={tip} material={mats.ember}>
           <sphereGeometry args={[0.022, 10, 10]} />
         </mesh>
-        <pointLight ref={spark} color="#ff9a3c" distance={2.5} decay={2} intensity={1.6} />
-        <Sparkles count={16} scale={0.25} size={2.2} speed={2.5} color="#ffc070" noise={1} />
+        {lights && <pointLight ref={spark} color="#ff9a3c" distance={2.5} decay={2} intensity={1.6} />}
+        {particles && <Sparkles count={16} scale={0.25} size={2.2} speed={2.5} color="#ffc070" noise={1} />}
       </group>
     </group>
   );

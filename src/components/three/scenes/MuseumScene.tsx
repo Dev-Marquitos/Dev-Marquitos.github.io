@@ -16,6 +16,7 @@ import { plaqueTexture, plasterTexture } from '../textures/procedural';
 import { MUSEUM_PIECES, type MuseumPiece } from '../../../data/museum';
 import { useMuseumStore } from '../../../stores/useMuseumStore';
 import { sfx } from '../../../stores/useExperience';
+import { qualityParams, useQuality } from '../../../stores/useQuality';
 
 const R = 7.6;
 const SPREAD = THREE.MathUtils.degToRad(150);
@@ -37,22 +38,22 @@ function pieceTransform(i: number, n: number) {
   return { theta, pos };
 }
 
-function Model({ id }: { id: MuseumPiece['id'] }) {
+function Model({ id, lights, particles }: { id: MuseumPiece['id']; lights: boolean; particles: boolean }) {
   switch (id) {
     case 'radio':
-      return <TubeRadio dim />;
+      return <TubeRadio dim lights={lights} />;
     case 'transmitter':
-      return <Transmitter />;
+      return <Transmitter lights={lights} />;
     case 'mic':
       return <StudioMic />;
     case 'turntable':
       return <Turntable />;
     case 'helmet':
-      return <MinerHelmet />;
+      return <MinerHelmet lights={lights} />;
     case 'cart':
       return <MineCart />;
     case 'dynamite':
-      return <Dynamite />;
+      return <Dynamite lights={lights} particles={particles} />;
   }
 }
 
@@ -97,7 +98,7 @@ function LightCone({ color = '#ffd9a0', height = 6.5, radius = 1.6, opacity = 0.
   );
 }
 
-function Pedestal({ piece, index, total, quality }: { piece: MuseumPiece; index: number; total: number; quality: boolean }) {
+function Pedestal({ piece, index, total, q }: { piece: MuseumPiece; index: number; total: number; q: ReturnType<typeof qualityParams> }) {
   const selected = useMuseumStore((s) => s.selected);
   const hovered = useMuseumStore((s) => s.hovered);
   const select = useMuseumStore((s) => s.select);
@@ -110,7 +111,6 @@ function Pedestal({ piece, index, total, quality }: { piece: MuseumPiece; index:
   const isHov = hovered === piece.id;
   const inspect = useMuseumStore((s) => s.inspect);
 
-  const spotTarget = useMemo(() => new THREE.Object3D(), []);
   const mats = useMemo(
     () => ({
       stone: new THREE.MeshStandardMaterial({ color: '#1c1916', roughness: 0.55, metalness: 0.15 }),
@@ -172,15 +172,13 @@ function Pedestal({ piece, index, total, quality }: { piece: MuseumPiece; index:
         }}
       >
         <group ref={spin} scale={lay.scale}>
-          <Model id={piece.id} />
+          <Model id={piece.id} lights={q.pieceLights} particles={q.particles} />
         </group>
       </group>
 
       {/* luz cenital */}
-      <primitive object={spotTarget} position={[0, 1, 0]} />
-      <spotLight position={[0, 6.5, 1.2]} angle={0.42} penumbra={0.9} intensity={isSel ? 90 : 55} distance={10} decay={2} color="#ffe2b8" target={spotTarget} />
-      {quality && <LightCone />}
-      {quality && <Sparkles count={18} scale={[2, 4, 2]} position={[0, 3, 0]} size={1.4} speed={0.2} opacity={0.4} color="#ffe0b0" />}
+      {q.cones && <LightCone />}
+      {q.particles && <Sparkles count={18} scale={[2, 4, 2]} position={[0, 3, 0]} size={1.4} speed={0.2} opacity={0.4} color="#ffe0b0" />}
 
       {isHov && !selected && (
         <Html position={[0, lay.focus + 1.35, 0]} center distanceFactor={9} zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
@@ -234,7 +232,7 @@ function Banner({ position, rotation, lines }: { position: [number, number, numb
   );
 }
 
-function Hall({ quality }: { quality: boolean }) {
+function Hall({ reflections, lights }: { reflections: boolean; lights: boolean }) {
   const wall = useMemo(() => {
     const t = plasterTexture().clone();
     t.repeat.set(10, 2);
@@ -245,7 +243,7 @@ function Hall({ quality }: { quality: boolean }) {
     <group>
       <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[16, 96]} />
-        {quality ? (
+        {reflections ? (
           <MeshReflectorMaterial
             blur={[400, 120]}
             resolution={1024}
@@ -271,7 +269,7 @@ function Hall({ quality }: { quality: boolean }) {
         <meshStandardMaterial color="#070605" roughness={1} />
       </mesh>
       <Banner position={[-5.4, 4.6, -10.5]} rotation={0.45} lines={['1959', 'FUNDACIÓN', 'SIGLO XX']} />
-      <Props />
+      <Props lights={lights} />
       <Banner position={[0, 4.9, -12.2]} rotation={0} lines={['XII', 'RADIO PÍO', 'LA VOZ', 'DE LA MINA']} />
       <Banner position={[5.4, 4.6, -10.5]} rotation={-0.45} lines={['HOY', 'SIGUE', 'AL AIRE']} />
     </group>
@@ -279,7 +277,7 @@ function Hall({ quality }: { quality: boolean }) {
 }
 
 /** Utilería CC0 (Poly Haven) alrededor de los pedestales */
-function Props() {
+function Props({ lights }: { lights: boolean }) {
   const at = (i: number, dx: number, dz: number) => {
     const { theta, pos } = pieceTransform(i, MUSEUM_PIECES.length);
     const right = new THREE.Vector3(Math.cos(theta), 0, Math.sin(theta));
@@ -296,7 +294,7 @@ function Props() {
       <GltfProp url={PROP_URLS.crate} position={crate.p} rotation={[0, crate.r + 0.5, 0]} scale={1.25} />
       <GltfProp url={PROP_URLS.barrel} position={barrel.p} rotation={[0, barrel.r, 0]} scale={1.3} />
       <GltfProp url={PROP_URLS.pickaxe} position={[pick.p[0], 0.62, pick.p[2]]} rotation={[0.05, pick.r + 0.4, -0.42]} scale={1.15} />
-      <Lantern position={lantern.p} rotation={[0, lantern.r, 0]} scale={2.2} intensity={6} distance={4} />
+      <Lantern position={lantern.p} rotation={[0, lantern.r, 0]} scale={2.2} intensity={6} distance={4} light={lights} />
     </group>
   );
 }
@@ -362,36 +360,70 @@ function CameraDirector() {
   );
 }
 
+/** Un único foco que viaja hasta la pieza elegida (en lugar de un foco por pedestal). */
+function FocusLight() {
+  const selected = useMuseumStore((s) => s.selected);
+  const light = useRef<THREE.SpotLight>(null);
+  const target = useMemo(() => new THREE.Object3D(), []);
+  const goal = useMemo(() => ({ pos: new THREE.Vector3(0, 11, 5), tgt: new THREE.Vector3(0, 1, -3), angle: 0.85, intensity: 260 }), []);
+  useEffect(() => {
+    const i = MUSEUM_PIECES.findIndex((p) => p.id === selected);
+    if (i < 0) {
+      goal.pos.set(0, 11, 5);
+      goal.tgt.set(0, 1, -3);
+      goal.angle = 0.85;
+      goal.intensity = 260;
+      return;
+    }
+    const { theta, pos } = pieceTransform(i, MUSEUM_PIECES.length);
+    const toCenter = new THREE.Vector3(-Math.sin(theta), 0, Math.cos(theta));
+    goal.pos.copy(pos).add(new THREE.Vector3(0, 6.5, 0)).add(toCenter.multiplyScalar(1.4));
+    goal.tgt.copy(pos).add(new THREE.Vector3(0, 1.2, 0));
+    goal.angle = 0.42;
+    goal.intensity = 140;
+  }, [selected, goal]);
+  useFrame((_, dt) => {
+    const l = light.current;
+    if (!l) return;
+    const k = 1 - Math.exp(-dt * 3);
+    l.position.lerp(goal.pos, k);
+    target.position.lerp(goal.tgt, k);
+    l.angle = THREE.MathUtils.lerp(l.angle, goal.angle, k);
+    l.intensity = THREE.MathUtils.lerp(l.intensity, goal.intensity, k);
+  });
+  return (
+    <>
+      <primitive object={target} />
+      <spotLight ref={light} target={target} position={[0, 11, 5]} angle={0.85} penumbra={0.85} intensity={260} distance={26} decay={2} color="#ffe2b8" />
+    </>
+  );
+}
+
 export function MuseumScene() {
-  const [quality, setQuality] = useState(true);
-  const [dpr, setDpr] = useState(1.5);
+  const tier = useQuality((s) => s.tier);
+  const downgrade = useQuality((s) => s.downgrade);
+  const q = qualityParams(tier);
   const select = useMuseumStore((s) => s.select);
   return (
     <Canvas
-      shadows
-      dpr={dpr}
+      key={tier}
+      shadows={q.shadows}
+      dpr={q.dpr}
       camera={{ position: [0, 5.6, 13.2], fov: 45, near: 0.1, far: 80 }}
-      gl={{ antialias: false, powerPreference: 'high-performance' }}
+      gl={{ antialias: tier === 'low', powerPreference: 'high-performance' }}
       onPointerMissed={() => select(null)}
     >
-      <PerformanceMonitor
-        onDecline={() => {
-          setQuality(false);
-          setDpr(1);
-        }}
-        onIncline={() => setDpr(1.75)}
-        flipflops={2}
-      />
+      <PerformanceMonitor onDecline={downgrade} flipflops={3} bounds={() => [28, 55]} />
       <color attach="background" args={['#050403']} />
       <fog attach="fog" args={['#050403', 16, 40]} />
       <ambientLight intensity={0.12} color="#8a7a66" />
       <hemisphereLight args={['#3a3128', '#0a0806', 0.35]} />
       <directionalLight
         position={[3, 12, 6]}
-        intensity={0.55}
+        intensity={0.9}
         color="#ffe9cc"
-        castShadow
-        shadow-mapSize={[2048, 2048]}
+        castShadow={q.shadows}
+        shadow-mapSize={[q.shadowMap, q.shadowMap]}
         shadow-camera-left={-12}
         shadow-camera-right={12}
         shadow-camera-top={12}
@@ -399,18 +431,19 @@ export function MuseumScene() {
         shadow-bias={-0.0004}
       />
       <Suspense fallback={null}>
-        <Environment resolution={256} frames={1} environmentIntensity={0.5}>
+        <Environment resolution={256} frames={1} environmentIntensity={0.75}>
           <Lightformer form="rect" intensity={2} color="#ffe2b8" position={[0, 8, 0]} rotation-x={Math.PI / 2} scale={[10, 10, 1]} />
           <Lightformer form="rect" intensity={0.8} color="#ffcf9a" position={[-8, 3, -2]} rotation-y={Math.PI / 2} scale={[6, 3, 1]} />
           <Lightformer form="rect" intensity={0.6} color="#9fb4e6" position={[8, 3, 2]} rotation-y={-Math.PI / 2} scale={[6, 3, 1]} />
         </Environment>
-        <Hall quality={quality} />
+        <Hall reflections={q.reflections} lights={q.pieceLights} />
         {MUSEUM_PIECES.map((p, i) => (
-          <Pedestal key={p.id} piece={p} index={i} total={MUSEUM_PIECES.length} quality={quality} />
+          <Pedestal key={p.id} piece={p} index={i} total={MUSEUM_PIECES.length} q={q} />
         ))}
       </Suspense>
+      <FocusLight />
       <CameraDirector />
-      <Effects enabled={quality} bloom={0.65} threshold={0.88} vignette={0.8} />
+      <Effects enabled={q.effects} msaa={q.msaa} bloom={0.65} threshold={0.88} vignette={0.8} />
     </Canvas>
   );
 }

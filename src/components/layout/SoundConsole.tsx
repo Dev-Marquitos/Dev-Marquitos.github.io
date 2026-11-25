@@ -4,6 +4,7 @@ import { AudioLines, Captions, Music2, SlidersHorizontal, Volume2, VolumeX } fro
 import { useExperience, sfx } from '../../stores/useExperience';
 import { narrator } from '../../lib/narrator';
 import { toggleNarration } from '../../stores/useNarration';
+import { useQuality, type Tier } from '../../stores/useQuality';
 
 function Toggle({ on, onClick, label, children }: { on: boolean; onClick: () => void; label: string; children: React.ReactNode }) {
   return (
@@ -27,6 +28,39 @@ function useVoices() {
   const [, force] = useState(0);
   useEffect(() => narrator.onVoices(() => force((n) => n + 1)), []);
   return narrator.voices;
+}
+
+function QualityPicker() {
+  const { tier, auto, gpu, setTier, setAuto } = useQuality();
+  const opts: [Tier | 'auto', string][] = [
+    ['auto', 'Auto'],
+    ['high', 'Alta'],
+    ['medium', 'Media'],
+    ['low', 'Baja'],
+  ];
+  return (
+    <div className="mt-5 pt-5 border-t border-white/10">
+      <p className="eyebrow mb-3">Calidad gráfica</p>
+      <div className="grid grid-cols-4 gap-1 rounded-lg bg-ore p-1">
+        {opts.map(([k, label]) => {
+          const on = k === 'auto' ? auto : !auto && tier === k;
+          return (
+            <button
+              key={k}
+              onClick={() => (k === 'auto' ? setAuto() : setTier(k))}
+              className={`rounded-md py-1.5 text-[11px] font-mono tracking-[0.1em] uppercase transition-colors ${on ? 'bg-amber text-ink' : 'text-tin hover:text-bone'}`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-2 text-[10.5px] text-dust leading-snug">
+        Nivel actual: <span className="text-tin">{tier === 'high' ? 'alta' : tier === 'medium' ? 'media' : 'baja'}</span>
+        {auto ? ' (automático)' : ''} · GPU: {gpu.replace(/^ANGLE \(|\)$/g, '').split(',').slice(0, 2).join(',')}
+      </p>
+    </div>
+  );
 }
 
 export function SoundConsole() {
@@ -89,6 +123,7 @@ export function SoundConsole() {
             ) : (
               <p className="text-tin text-xs leading-relaxed">Este navegador no ofrece síntesis de voz. Los textos se mostrarán como subtítulos.</p>
             )}
+            <QualityPicker />
           </motion.div>
         )}
       </AnimatePresence>

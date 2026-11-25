@@ -11,6 +11,7 @@ import { Lantern } from '../models/Props';
 import { plasterTexture, scriptPaperTexture, woodTexture } from '../textures/procedural';
 import { audio, type Tuner } from '../../../lib/audio/engine';
 import { useExperience } from '../../../stores/useExperience';
+import { qualityParams, useQuality } from '../../../stores/useQuality';
 
 /* Trayectoria de cámara controlada por el scroll */
 // El texto ocupa la mitad izquierda: la cámara mira a la izquierda de la radio
@@ -146,10 +147,10 @@ function Room() {
   );
 }
 
-function Outdoors() {
+function Outdoors({ stars }: { stars: number }) {
   return (
     <group>
-      <Stars radius={110} depth={40} count={2600} factor={4.5} saturation={0} fade speed={0.35} />
+      <Stars radius={110} depth={40} count={stars} factor={4.5} saturation={0} fade speed={0.35} />
       <Moon position={[26, 15, -70]} />
       <Mountains />
       <Headframe position={[7.5, -3.6, -20]} scale={0.95} />
@@ -161,24 +162,20 @@ function Outdoors() {
 
 export function HeroScene({ progress, active = true }: { progress: RefObject<number>; active?: boolean }) {
   const drive = useRef<RadioDrive>({ needle: 0.06, glow: 0, tuned: 0 });
-  const [dpr, setDpr] = useState(1.5);
-  const [fx, setFx] = useState(true);
+  const tier = useQuality((s) => s.tier);
+  const downgrade = useQuality((s) => s.downgrade);
+  const q = qualityParams(tier);
+  const [dpr, setDpr] = useState<number | [number, number]>(q.dpr);
   return (
     <Canvas
-      shadows
+      key={tier}
+      shadows={q.shadows}
       dpr={dpr}
       frameloop={active ? 'always' : 'never'}
       camera={{ position: [-1.55, 0.8, 8.2], fov: 38, near: 0.1, far: 220 }}
-      gl={{ antialias: false, powerPreference: 'high-performance' }}
+      gl={{ antialias: tier === 'low', powerPreference: 'high-performance' }}
     >
-      <PerformanceMonitor
-        onIncline={() => setDpr(1.75)}
-        onDecline={() => {
-          setDpr(1);
-          setFx(false);
-        }}
-        flipflops={2}
-      />
+      <PerformanceMonitor onDecline={downgrade} onIncline={() => tier === 'high' && setDpr([1, 1.75])} flipflops={3} bounds={() => [28, 55]} />
       <color attach="background" args={['#04050a']} />
       <fog attach="fog" args={['#05070d', 14, 95]} />
       <ambientLight intensity={0.14} color="#3a4a70" />
@@ -188,33 +185,33 @@ export function HeroScene({ progress, active = true }: { progress: RefObject<num
         position={[9, 6, -11]}
         intensity={1.1}
         color="#9fb4e6"
-        castShadow
-        shadow-mapSize={[1024, 1024]}
+        castShadow={q.shadows}
+        shadow-mapSize={[q.shadowMap / 2, q.shadowMap / 2]}
         shadow-camera-left={-6}
         shadow-camera-right={6}
         shadow-camera-top={6}
         shadow-camera-bottom={-6}
         shadow-bias={-0.0005}
       />
-      <spotLight position={[-1.5, 5, 4]} angle={0.55} penumbra={1} intensity={9} color="#ffcf9a" castShadow shadow-mapSize={[1024, 1024]} distance={14} decay={2} />
+      <spotLight position={[-1.5, 5, 4]} angle={0.55} penumbra={1} intensity={9} color="#ffcf9a" distance={14} decay={2} />
 
       <Suspense fallback={null}>
         <Room />
         <TubeRadio drive={drive} position={[-0.4, 0.02, 0]} />
         <StudioMic position={[-3.6, -1.07, -0.2]} rotation={[0, 0.55, 0]} scale={0.62} />
-        <MinerHelmet position={[2.55, -1.04, 0.45]} rotation={[0, -0.75, 0]} scale={0.55} />
+        <MinerHelmet position={[2.55, -1.04, 0.45]} rotation={[0, -0.75, 0]} scale={0.55} lights={q.pieceLights} />
         <Lantern position={[-2.05, -1.07, -0.55]} scale={5.2} intensity={5} distance={6} />
         <Environment resolution={256} frames={1} environmentIntensity={0.55}>
           <Lightformer form="rect" intensity={1.4} color="#ffcf9a" position={[-3, 3, 4]} scale={[5, 2, 1]} />
           <Lightformer form="rect" intensity={0.9} color="#8fa6d8" position={[4, 2, -4]} scale={[3, 3, 1]} />
         </Environment>
-        <Outdoors />
-        <Sparkles count={45} scale={[7, 3.5, 2.5]} position={[0, 0.6, 0]} size={1.1} speed={0.15} opacity={0.3} color="#ffd9a0" />
+        <Outdoors stars={q.stars} />
+        {q.particles && <Sparkles count={45} scale={[7, 3.5, 2.5]} position={[0, 0.6, 0]} size={1.1} speed={0.15} opacity={0.3} color="#ffd9a0" />}
       </Suspense>
 
       <Rig progress={progress} />
       <RadioDriver progress={progress} drive={drive} />
-      <Effects enabled={fx} bloom={1.15} threshold={0.78} />
+      <Effects enabled={q.effects} msaa={q.msaa} bloom={1.15} threshold={0.78} />
     </Canvas>
   );
 }

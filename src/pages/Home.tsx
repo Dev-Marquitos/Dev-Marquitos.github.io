@@ -12,6 +12,7 @@ import { Footer } from '../components/layout/Footer';
 import { Counter, NarrateButton, Reveal, SplitTitle } from '../components/ui/Reveal';
 import { useRadio } from '../stores/useRadio';
 import { useExperience } from '../stores/useExperience';
+import { useQuality } from '../stores/useQuality';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -36,6 +37,7 @@ function Hero() {
   const readout = useRef<HTMLSpanElement>(null);
   const [inView, setInView] = useState(true);
   const phase = useExperience((s) => s.phase);
+  const tier = useQuality((s) => s.tier);
   const play = useRadio((s) => s.play);
 
   useEffect(() => {
@@ -75,7 +77,7 @@ function Hero() {
       <div className="sticky top-0 h-screen overflow-hidden">
         <div className="absolute inset-0">
           <Suspense fallback={<div className="absolute inset-0 bg-ink" />}>
-            <HeroScene progress={progress} active={inView && phase !== 'outro'} />
+            <HeroScene progress={progress} active={inView && phase !== 'outro' && (tier !== 'low' || phase !== 'intro')} />
           </Suspense>
         </div>
         {/* degradados para legibilidad */}

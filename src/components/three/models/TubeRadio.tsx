@@ -19,6 +19,8 @@ type Props = ThreeElements['group'] & {
   idle?: boolean;
   /** brillo reducido (sala del museo) */
   dim?: boolean;
+  /** luz cálida trasera (desactivable en equipos modestos) */
+  lights?: boolean;
 };
 
 function knobGeometry(radius = 0.12) {
@@ -36,12 +38,11 @@ function knobGeometry(radius = 0.12) {
   return g;
 }
 
-export function TubeRadio({ drive, idle = true, dim = false, ...props }: Props) {
+export function TubeRadio({ drive, idle = true, dim = false, lights = true, ...props }: Props) {
   const needleRef = useRef<THREE.Mesh>(null);
   const dialMat = useRef<THREE.MeshStandardMaterial>(null);
   const eyeWedge = useRef<THREE.Mesh>(null);
   const backLight = useRef<THREE.PointLight>(null);
-  const dialLight = useRef<THREE.PointLight>(null);
   const tuneKnob = useRef<THREE.Mesh>(null);
 
   const mats = useMemo(() => {
@@ -79,7 +80,6 @@ export function TubeRadio({ drive, idle = true, dim = false, ...props }: Props) 
     if (tuneKnob.current) tuneKnob.current.rotation.z = -d.needle * Math.PI * 3;
     const flicker = 1 + Math.sin(t * 13) * 0.015 + Math.sin(t * 31) * 0.01;
     if (dialMat.current) dialMat.current.emissiveIntensity = 0.25 + d.glow * 1.25 * flicker;
-    if (dialLight.current) dialLight.current.intensity = d.glow * 2.2 * flicker;
     if (backLight.current) backLight.current.intensity = d.glow * 7 * flicker;
     if (eyeWedge.current) {
       // el sector oscuro se cierra cuando la emisora está sintonizada
@@ -126,7 +126,6 @@ export function TubeRadio({ drive, idle = true, dim = false, ...props }: Props) 
       <mesh position={[0.68, 0.33, 0.705]} material={mats.glass}>
         <planeGeometry args={[1.17, 0.54]} />
       </mesh>
-      <pointLight ref={dialLight} position={[0.68, 0.2, 1.9]} color="#ffae45" distance={4.5} decay={2} intensity={2} />
 
       {/* Ojo mágico (indicador de sintonía) */}
       <group position={[0.68, -0.1, 0.665]}>
@@ -166,7 +165,7 @@ export function TubeRadio({ drive, idle = true, dim = false, ...props }: Props) 
       ))}
 
       {/* Resplandor cálido de las válvulas en la parte trasera */}
-      <pointLight ref={backLight} position={[0, 0.2, -1.0]} color="#ff8a2a" distance={5} decay={2} intensity={6} />
+      {lights && <pointLight ref={backLight} position={[0, 0.2, -1.0]} color="#ff8a2a" distance={5} decay={2} intensity={6} />}
     </group>
   );
 }

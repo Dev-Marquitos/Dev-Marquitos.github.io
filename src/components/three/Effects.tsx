@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { useEffect, useMemo } from 'react';
 
 interface Props {
+  msaa?: number;
   bloom?: number;
   threshold?: number;
   vignette?: number;
@@ -18,7 +19,7 @@ interface Props {
  * viñeta, grano y mapeo tonal ACES. Si el equipo no rinde, se desactiva y el
  * renderer aplica el mapeo tonal directamente.
  */
-export function Effects({ bloom = 1.1, threshold = 0.82, vignette = 0.72, aberration = true, enabled = true }: Props) {
+export function Effects({ msaa = 4, bloom = 1.1, threshold = 0.82, vignette = 0.72, aberration = true, enabled = true }: Props) {
   const gl = useThree((s) => s.gl);
   const offset = useMemo(() => new THREE.Vector2(0.00035, 0.00025), []);
   const zero = useMemo(() => new THREE.Vector2(0, 0), []);
@@ -27,7 +28,7 @@ export function Effects({ bloom = 1.1, threshold = 0.82, vignette = 0.72, aberra
   }, [enabled, gl]);
   if (!enabled) return null;
   return (
-    <EffectComposer multisampling={4}>
+    <EffectComposer multisampling={msaa}>
       <Bloom mipmapBlur intensity={bloom} luminanceThreshold={threshold} luminanceSmoothing={0.25} radius={0.75} />
       <ChromaticAberration offset={aberration ? offset : zero} radialModulation={false} modulationOffset={0} blendFunction={BlendFunction.NORMAL} />
       <Vignette offset={0.28} darkness={vignette} />

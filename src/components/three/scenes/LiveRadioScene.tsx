@@ -7,6 +7,7 @@ import { Effects } from '../Effects';
 import { audio } from '../../../lib/audio/engine';
 import { useRadio } from '../../../stores/useRadio';
 import { STATIONS } from '../../../data/stations';
+import { qualityParams, useQuality } from '../../../stores/useQuality';
 
 const buf = new Uint8Array(2048);
 
@@ -29,8 +30,10 @@ function Driver({ drive }: { drive: React.RefObject<RadioDrive> }) {
 
 export default function LiveRadioScene() {
   const drive = useRef<RadioDrive>({ needle: 0.1, glow: 0.3, tuned: 0 });
+  const tier = useQuality((s) => s.tier);
+  const q = qualityParams(tier);
   return (
-    <Canvas dpr={[1, 1.75]} camera={{ position: [0, 0.4, 6.4], fov: 34 }} gl={{ antialias: false }} shadows>
+    <Canvas key={tier} dpr={q.dpr} camera={{ position: [0, 0.4, 6.4], fov: 34 }} gl={{ antialias: tier === 'low' }} shadows={q.shadows}>
       <color attach="background" args={['#0b0907']} />
       <ambientLight intensity={0.2} />
       <spotLight position={[3, 5, 5]} angle={0.5} penumbra={1} intensity={60} distance={20} decay={2} color="#ffe0b8" castShadow />
@@ -42,13 +45,13 @@ export default function LiveRadioScene() {
         </Environment>
         <PresentationControls global={false} cursor snap rotation={[0.05, -0.35, 0]} polar={[-0.3, 0.3]} azimuth={[-0.9, 0.9]}>
           <Float speed={1.2} rotationIntensity={0.15} floatIntensity={0.35}>
-            <TubeRadio drive={drive} />
+            <TubeRadio drive={drive} lights={q.pieceLights} />
           </Float>
         </PresentationControls>
         <ContactShadows position={[0, -1.25, 0]} opacity={0.65} scale={9} blur={2.6} far={3} />
       </Suspense>
       <Driver drive={drive} />
-      <Effects bloom={1.2} threshold={0.75} vignette={0.6} />
+      <Effects enabled={q.effects} msaa={q.msaa} bloom={1.2} threshold={0.75} vignette={0.6} />
     </Canvas>
   );
 }
