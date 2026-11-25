@@ -27,8 +27,12 @@ function go(path: string) {
 /** Desplaza el documento hasta el final de forma lenta mientras dure la narración. */
 async function slowScroll(selector: string | null, seconds: number) {
   await wait(300);
-  const el = selector ? (document.querySelector(selector) as HTMLElement | null) : null;
-  const end = el ? el.offsetTop + el.offsetHeight - window.innerHeight : document.documentElement.scrollHeight - window.innerHeight;
+  let el = selector ? (document.querySelector(selector) as HTMLElement | null) : null;
+  // GSAP envuelve las secciones fijadas en un .pin-spacer que contiene el recorrido real
+  if (el?.parentElement?.classList.contains('pin-spacer')) el = el.parentElement;
+  const end = el
+    ? el.getBoundingClientRect().top + window.scrollY + el.offsetHeight - window.innerHeight
+    : document.documentElement.scrollHeight - window.innerHeight;
   await scrollToTarget(Math.max(0, end), seconds);
 }
 

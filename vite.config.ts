@@ -8,5 +8,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  base: './', // CRITICAL: This allows it to work on GitHub Pages regardless of the repo name
+  base: './', // rutas relativas: funciona en GitHub Pages con cualquier nombre de repositorio
+  build: {
+    chunkSizeWarningLimit: 1500,
+  },
 })

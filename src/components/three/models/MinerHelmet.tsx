@@ -15,7 +15,7 @@ export function MinerHelmet({ lit = true, ...props }: Props) {
       shell: new THREE.MeshPhysicalMaterial({ map: paintedMetalTexture('#e2d8bd', 41, 0.13), roughness: 0.42, clearcoat: 0.7, clearcoatRoughness: 0.35 }),
       band: new THREE.MeshStandardMaterial({ color: '#2a1f16', roughness: 0.8 }),
       brass: new THREE.MeshStandardMaterial({ color: '#c39a4f', metalness: 1, roughness: 0.3 }),
-      reflector: new THREE.MeshStandardMaterial({ color: '#d9c08a', metalness: 1, roughness: 0.22, side: THREE.DoubleSide }),
+      reflector: new THREE.MeshStandardMaterial({ color: '#d9c08a', metalness: 0.9, roughness: 0.45, side: THREE.DoubleSide }),
       flame: new THREE.MeshBasicMaterial({ color: '#ffd27a', transparent: true, opacity: 0.95, toneMapped: false }),
       flameCore: new THREE.MeshBasicMaterial({ color: '#7fc8ff', transparent: true, opacity: 0.8, toneMapped: false }),
     }),
@@ -93,7 +93,7 @@ export function MinerHelmet({ lit = true, ...props }: Props) {
             <mesh position={[0, 0.012, 0.001]} material={mats.flameCore}>
               <sphereGeometry args={[0.01, 8, 8]} />
             </mesh>
-            <pointLight ref={light} position={[0, 0.05, 0.12]} color="#ffb35c" distance={4} decay={2} intensity={1.8} castShadow={false} />
+            <pointLight ref={light} position={[0, 0.06, 0.3]} color="#ffb35c" distance={4} decay={2} intensity={1.8} castShadow={false} />
           </group>
         )}
       </group>

@@ -1,32 +1,52 @@
-# React + TypeScript + Vite
+# Radio Pío XII — Museo virtual interactivo 3D
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Museo virtual de **Radio Pío XII**, la emisora del distrito minero **Siglo XX – Catavi** (Llallagua, Potosí, Bolivia), fundada el 1 de mayo de 1959. El sitio reúne historia verificada, objetos reconstruidos en 3D, la red de radios mineras, testimonios, un archivo fotográfico con licencias libres y la **señal en vivo** de la emisora.
 
-Currently, two official plugins are available:
+Proyecto de la asignatura *Programación Gráfica*, Carrera de Ingeniería Informática, Universidad Nacional “Siglo XX”.
+Autor: Marco Antonio Calizaya Laura · Docente guía: Juan Pablo Luna Felipez, Ph.D.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## La experiencia
 
-## React Compiler
+| Momento | Qué ocurre |
+|---|---|
+| Entrada | Se “enciende” la radio: zumbido de válvulas, dial de onda corta que busca la emisora entre la estática, código morse y bienvenida del narrador. |
+| 01 Inicio | Escena 3D guiada por el scroll: una habitación del campamento, de noche, con la radio, el micrófono, un farol y un guardatojo; por la ventana se ven el castillo minero y la antena. |
+| 02 Historia | Línea de tiempo horizontal con 21 hechos documentados (1900 – hoy), con fuente y narración en cada uno. |
+| 03 Museo 3D | Rotonda con siete piezas procedurales (receptor, transmisor, micrófono, tocadiscos, guardatojo, carro minero, dinamita), cámara que vuela entre ellas y un recorrido guiado. |
+| 04 Red minera | Mapa de Bolivia (Natural Earth) con las radios mineras, vista ampliada del distrito y la animación de la “cadena”. |
+| 05 Voces | Personajes, la huelga de hambre de 1977–78, citas literales, programas y obras. |
+| 06 Archivo | 18 fotografías con licencia libre, con visor y créditos. |
+| 07 En vivo | Señal real (Icecast de ALER) con espectro FFT, vúmetros, oyentes en tiempo real y la “frecuencia memoria”: un dial que sintoniza boletines del pasado. |
+| 08 Créditos | Arquitectura, paleta 60-30-10, metodología, fuentes APA 7, licencias y código QR. |
+| Salida | “Apagar la radio”: apagado CRT, despedida narrada, créditos y QR. |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Además: asistente “Pregúntale al archivo” (búsqueda BM25 local, también por voz), recorrido guiado automático (modo presentación), subtítulos, música generativa y atajos de teclado (**M** música, **N** narrador, **Esc** detener).
 
-## Expanding the Oxlint configuration
+## Tecnología
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+React 19 · TypeScript · Vite 8 · Three.js r185 · React Three Fiber 9 · Drei · postprocessing · GSAP + ScrollTrigger · Lenis · Framer Motion · Zustand · Tailwind CSS 4 · Web Audio API · Web Speech API.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+Todos los modelos de las piezas, las texturas, la música y los efectos de sonido se generan por código. La utilería fotogramétrica proviene de Poly Haven (CC0).
+
+## Uso
+
+```bash
+npm install
+npm run dev       # desarrollo
+npm run build     # compilación de producción en dist/
+npm run preview   # sirve dist/ en http://localhost:4173
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+- `?intro=0` en la URL omite la introducción (útil para pruebas y capturas).
+- Para la mejor voz del narrador, usar **Microsoft Edge**: ofrece voces neuronales de Bolivia (Marcelo, Sofía).
+- La señal en vivo y las estadísticas de oyentes requieren internet; el resto del museo funciona sin conexión.
+
+## Publicación
+
+El flujo `.github/workflows/deploy.yml` compila y publica en GitHub Pages en cada *push* a `main`. En el repositorio hay que activar **Settings → Pages → Source: GitHub Actions**.
+
+## Licencias de recursos
+
+- Fotografías: Wikimedia Commons (dominio público, CC BY y CC BY-SA). Autor y licencia en la sala Archivo y en Créditos.
+- Utilería 3D: Poly Haven (CC0). Cartografía: Natural Earth (dominio público). Tipografías: SIL Open Font License.
+- Citas: López Vigil, J. I. (1985). *Una mina de coraje*. ALER – Pío XII (CC BY-NC-SA 3.0).

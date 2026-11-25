@@ -51,9 +51,10 @@ export function TubeRadio({ drive, idle = true, dim = false, ...props }: Props) 
       bezel: new THREE.MeshPhysicalMaterial({ map: woodTexture('dark'), roughness: 0.35, clearcoat: 0.7, clearcoatRoughness: 0.2 }),
       fabric: new THREE.MeshStandardMaterial({ map: fabricTexture(), roughness: 0.95, metalness: 0 }),
       slat: new THREE.MeshPhysicalMaterial({ map: woodTexture('oak'), roughness: 0.4, clearcoat: 0.6 }),
-      brass: new THREE.MeshStandardMaterial({ color: '#c9a25a', metalness: 1, roughness: 0.28 }),
+      brass: new THREE.MeshStandardMaterial({ color: '#c9a25a', metalness: 1, roughness: 0.38 }),
       bakelite: new THREE.MeshPhysicalMaterial({ color: '#1d130c', roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.12 }),
-      glass: new THREE.MeshPhysicalMaterial({ color: '#ffffff', transparent: true, opacity: 0.1, roughness: 0.08, metalness: 0, clearcoat: 0.4, envMapIntensity: 0.15 }),
+      // vidrio mate: un reflejo especular muy concentrado desbordaría el búfer HDR (half float)
+      glass: new THREE.MeshStandardMaterial({ color: '#ffffff', transparent: true, opacity: 0.08, roughness: 0.45, metalness: 0, envMapIntensity: 0.1 }),
       needle: new THREE.MeshStandardMaterial({ color: '#7a0d05', emissive: '#ff2a10', emissiveIntensity: 1.6 }),
       eye: new THREE.MeshStandardMaterial({ color: '#0a2a14', emissive: '#3dff8b', emissiveIntensity: 2.4 }),
       eyeDark: new THREE.MeshBasicMaterial({ color: '#04140a' }),
@@ -125,7 +126,7 @@ export function TubeRadio({ drive, idle = true, dim = false, ...props }: Props) 
       <mesh position={[0.68, 0.33, 0.705]} material={mats.glass}>
         <planeGeometry args={[1.17, 0.54]} />
       </mesh>
-      <pointLight ref={dialLight} position={[0.68, 0.33, 1.05]} color="#ffae45" distance={3.2} decay={2} intensity={2} />
+      <pointLight ref={dialLight} position={[0.68, 0.2, 1.9]} color="#ffae45" distance={4.5} decay={2} intensity={2} />
 
       {/* Ojo mágico (indicador de sintonía) */}
       <group position={[0.68, -0.1, 0.665]}>
