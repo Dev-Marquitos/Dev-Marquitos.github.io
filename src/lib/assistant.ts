@@ -43,6 +43,7 @@ const SYN: [RegExp, string][] = [
   [/^(relocaliz\w*|21060|decreto|despid\w*)$/, 'relocalizacion'],
   [/^(marcha\w*|calamarca)$/, 'marcha'],
   [/^(hoy|actual\w*|ahora|todavia|sigue)$/, 'hoy'],
+  [/^(queda|ubica\w*|localiza\w*|lugar|situad\w*)$/, 'ubicacion'],
   [/^(quien\w*|autor\w*|hizo|desarroll\w*|credito\w*|universidad|proyecto)$/, 'creditos'],
 ];
 
