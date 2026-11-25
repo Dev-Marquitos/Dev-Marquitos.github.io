@@ -44,7 +44,13 @@ npm run preview   # sirve dist/ en http://localhost:4173
 
 ## Publicación
 
-El flujo `.github/workflows/deploy.yml` compila y publica en GitHub Pages en cada *push* a `main`. En el repositorio hay que activar **Settings → Pages → Source: GitHub Actions**.
+El sitio se publica en **https://dev-marquitos.github.io/** desde la rama `gh-pages`:
+
+```bash
+npm run deploy    # compila y sube dist/ a la rama gh-pages
+```
+
+GitHub Pages tarda uno o dos minutos en mostrar la nueva versión (si el navegador muestra la anterior, recargar con Ctrl + F5). El código fuente vive en la rama `main`.
 
 ## Licencias de recursos
 
