@@ -38,6 +38,7 @@ npm run preview   # sirve dist/ en http://localhost:4173
 ```
 
 - `?intro=0` en la URL omite la introducción (útil para pruebas y capturas).
+- **Calidad gráfica adaptativa**: el sitio detecta la GPU y elige entre calidad alta, media o baja; si los FPS caen, baja de nivel automáticamente. El nivel también se puede fijar en el panel de ajustes (ícono de controles, abajo a la derecha) o con `?q=high|medium|low`. En una NVIDIA GeForce GT 710 el nivel automático (bajo) da 60–110 FPS.
 - Para la mejor voz del narrador, usar **Microsoft Edge**: ofrece voces neuronales de Bolivia (Marcelo, Sofía).
 - La señal en vivo y las estadísticas de oyentes requieren internet; el resto del museo funciona sin conexión.
 

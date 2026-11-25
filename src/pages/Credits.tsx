@@ -22,7 +22,7 @@ const STACK: [string, string, string][] = [
 const LAYERS = [
   { name: 'Experiencia', items: ['Intro de encendido', 'Recorrido guiado', 'Despedida y créditos'] },
   { name: 'Salas (React)', items: ['Inicio', 'Historia', 'Museo 3D', 'Red minera', 'Voces', 'Archivo', 'En vivo', 'Créditos'] },
-  { name: 'Motores', items: ['Escenas WebGL (R3F)', 'Motor de audio (Web Audio)', 'Narrador (Web Speech)', 'Asistente BM25'] },
+  { name: 'Motores', items: ['Escenas WebGL (R3F)', 'Calidad gráfica adaptativa', 'Motor de audio (Web Audio)', 'Narrador (Web Speech)', 'Asistente BM25'] },
   { name: 'Datos', items: ['Línea de tiempo verificada', 'Piezas y fichas', 'Red de radios (Natural Earth)', 'Imágenes con licencia'] },
   { name: 'Red', items: ['GitHub Pages (estático)', 'Icecast de ALER (MP3 96 kbps, CORS)'] },
 ];
@@ -32,7 +32,7 @@ const CYCLES = [
   ['7', 'Rediseño integral', 'Nuevo sistema visual 60 · 30 · 10, tipografía y navegación por salas.'],
   ['8', 'Escenas y modelos', 'Siete piezas procedurales, sala con reflejos, escena narrativa guiada por scroll.'],
   ['9', 'Sonido y voz', 'Motor de audio procedural, narrador, subtítulos y análisis del stream real.'],
-  ['10', 'Contenidos verificados', 'Línea de tiempo con fuentes, mapa de la red, voces, archivo y asistente.'],
+  ['10', 'Contenido y rendimiento', 'Fuentes verificadas, mapa, voces, archivo, asistente y calidad gráfica adaptativa (de 2 a 60 FPS en una GPU de gama baja).'],
 ];
 
 export default function Credits() {

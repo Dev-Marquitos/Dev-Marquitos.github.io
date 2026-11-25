@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { CameraControls, Environment, Html, Lightformer, MeshReflectorMaterial, PerformanceMonitor, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';

@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Artículo científico (documento local, no se publica con el sitio)
+Articulo_Cientifico_*
