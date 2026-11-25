@@ -1,9 +1,10 @@
-import { Suspense, useRef } from 'react';
+import { Suspense, useCallback, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { ContactShadows, Environment, Lightformer, PresentationControls, Float } from '@react-three/drei';
 import * as THREE from 'three';
 import { TubeRadio, type RadioDrive } from '../models/TubeRadio';
 import { Effects } from '../Effects';
+import { CompileGate } from '../CompileGate';
 import { audio } from '../../../lib/audio/engine';
 import { useRadio } from '../../../stores/useRadio';
 import { STATIONS } from '../../../data/stations';
@@ -32,8 +33,19 @@ export default function LiveRadioScene() {
   const drive = useRef<RadioDrive>({ needle: 0.1, glow: 0.3, tuned: 0 });
   const tier = useQuality((s) => s.tier);
   const q = qualityParams(tier);
+  const [compiledTier, setCompiledTier] = useState<string | null>(null);
+  const compiled = compiledTier === tier;
+  const onReady = useCallback(() => setCompiledTier(tier), [tier]);
   return (
-    <Canvas key={tier} dpr={q.dpr} camera={{ position: [0, 0.4, 6.4], fov: 34 }} gl={{ antialias: tier === 'low' }} shadows={q.shadows}>
+    <Canvas
+      key={tier}
+      dpr={q.dpr}
+      frameloop={compiled ? 'always' : 'never'}
+      style={{ opacity: compiled ? 1 : 0, transition: 'opacity 1s ease' }}
+      camera={{ position: [0, 0.4, 6.4], fov: 34 }}
+      gl={{ antialias: tier === 'low' }}
+      shadows={q.shadows}
+    >
       <color attach="background" args={['#0b0907']} />
       <ambientLight intensity={0.2} />
       <spotLight position={[3, 5, 5]} angle={0.5} penumbra={1} intensity={60} distance={20} decay={2} color="#ffe0b8" castShadow />
@@ -49,6 +61,7 @@ export default function LiveRadioScene() {
           </Float>
         </PresentationControls>
         <ContactShadows position={[0, -1.25, 0]} opacity={0.65} scale={9} blur={2.6} far={3} />
+        <CompileGate onReady={onReady} />
       </Suspense>
       <Driver drive={drive} />
       <Effects enabled={q.effects} msaa={q.msaa} bloom={1.2} threshold={0.75} vignette={0.6} />

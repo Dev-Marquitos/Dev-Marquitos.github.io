@@ -292,6 +292,25 @@ input[type="range"].range-amber::-moz-range-thumb {
   border: 3px solid var(--color-amber);
 }
 
+/* ---------- Calidad adaptativa de la interfaz ---------- */
+/* Calidad baja: sin grano animado ni desenfoques de fondo (muy costosos en GPU modestas) */
+html.q-low .film-grain {
+  display: none;
+}
+html.q-low .panel,
+html.q-low [class*="backdrop-blur"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.q-low .panel {
+  background: color-mix(in srgb, var(--color-shaft) 96%, transparent);
+}
+/* Calidad media: grano estático */
+html.q-medium .film-grain {
+  animation: none;
+  opacity: 0.05;
+}
+
 /* Apagado CRT del sitio completo (despedida) */
 .crt-off {
   animation: crt-off 1.25s cubic-bezier(0.6, 0, 0.9, 0.4) forwards;

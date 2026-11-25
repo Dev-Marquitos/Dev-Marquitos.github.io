@@ -11,6 +11,7 @@ import { IMAGES } from '../data/images';
 import { NARRATION } from '../data/narration';
 import { Footer } from '../components/layout/Footer';
 import { NarrateButton, Reveal, SplitTitle } from '../components/ui/Reveal';
+import { eventText } from '../lib/narrationTexts';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -59,7 +60,7 @@ function EventPanel({ ev, index }: { ev: TimelineEvent; index: number }) {
             <h3 className="font-display text-4xl md:text-5xl leading-[1] tracking-tight">{ev.title}</h3>
             <p className="mt-5 text-[17px] text-tin leading-relaxed max-w-xl">{ev.text}</p>
             <div className="mt-6 flex flex-wrap items-center gap-4">
-              <NarrateButton text={`${ev.date ?? ev.year}. ${ev.title}. ${ev.text}`} id={`ev-${index}`} />
+              <NarrateButton text={eventText(ev)} id={`ev-${index}`} />
               <span className="text-[11px] text-dust max-w-xs leading-snug">Fuente: {ev.source}</span>
             </div>
           </div>

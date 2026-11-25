@@ -14,6 +14,7 @@ import Outro from './components/experience/Outro';
 import { useExperience } from './stores/useExperience';
 import { initSmoothScroll } from './lib/smoothScroll';
 import { stopNarration } from './stores/useNarration';
+import { useQuality } from './stores/useQuality';
 
 const Home = lazy(() => import('./pages/Home'));
 const History = lazy(() => import('./pages/History'));
@@ -70,8 +71,41 @@ export default function App() {
   const location = useLocation();
   const phase = useExperience((s) => s.phase);
 
+  const tier = useQuality((s) => s.tier);
+
+  // clase de calidad en <html>: los efectos de interfaz costosos se desactivan en equipos modestos
   useEffect(() => {
-    initSmoothScroll();
+    const el = document.documentElement;
+    el.classList.remove('q-low', 'q-medium', 'q-high');
+    el.classList.add(`q-${tier}`);
+  }, [tier]);
+
+  // precarga en segundo plano de las demás salas y de la utilería del museo
+  useEffect(() => {
+    if (phase !== 'site') return;
+    const loaders: Array<() => Promise<unknown>> = [
+      () => import('./pages/History'),
+      () => import('./pages/Museum'),
+      () => import('./components/three/scenes/MuseumScene'),
+      () => import('./pages/Live'),
+      () => import('./pages/Network'),
+      () => import('./pages/Voices'),
+      () => import('./pages/Archive'),
+      () => import('./pages/Credits'),
+      // la utilería 3D (≈ 6 MB) se precarga al final y con una pausa, para no competir con la navegación
+      () => new Promise((r) => window.setTimeout(r, 8000)),
+      () => import('./components/three/models/propUrls').then((m) => m.preloadProps()),
+    ];
+    const run = () => loaders.reduce<Promise<unknown>>((p, load) => p.then(() => load()).catch(() => undefined), Promise.resolve());
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+    const t = w.requestIdleCallback ? w.requestIdleCallback(run, { timeout: 5000 }) : window.setTimeout(run, 3000);
+    return () => {
+      if (!w.requestIdleCallback) window.clearTimeout(t);
+    };
+  }, [phase]);
+
+  useEffect(() => {
+    initSmoothScroll(useQuality.getState().tier === 'low');
     const params = new URLSearchParams(window.location.search);
     if (params.get('intro') === '0') useExperience.getState().setPhase('site');
   }, []);
@@ -86,7 +120,7 @@ export default function App() {
         <main>
           <Suspense fallback={<PageFallback />}>
             <AnimatePresence mode="wait">
-              <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+              <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
                 <Routes location={location}>
                   <Route path="/" element={<Home />} />
                   <Route path="/historia" element={<History />} />

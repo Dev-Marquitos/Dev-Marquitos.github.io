@@ -21,6 +21,7 @@ export const CREDITS: { title: string; lines: string[] }[] = [
   },
   { title: 'Señal en vivo', lines: ['Radio Pío XII — servidor de streaming de ALER'] },
   { title: 'Modelos 3D, texturas, música y efectos', lines: ['Generados por código (geometría y audio procedurales)'] },
+  { title: 'Voz del narrador', lines: ['Marcelo (Bolivia), voz neuronal de Microsoft'] },
   {
     title: 'Agradecimientos',
     lines: [

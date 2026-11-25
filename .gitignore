@@ -25,3 +25,6 @@ dist-ssr
 
 # Artículo científico (documento local, no se publica con el sitio)
 Articulo_Cientifico_*
+
+# lista intermedia del generador de voz (se recrea con npm run voz)
+scripts/narraciones.json

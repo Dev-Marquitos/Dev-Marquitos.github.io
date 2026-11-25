@@ -68,7 +68,7 @@ export function Assistant() {
       : { id: id + 1, from: 'bot', text: 'No encontré eso en el archivo del museo. Prueba preguntando por la fundación, las masacres, la huelga de 1977, la Cadena de la Democracia, los objetos del museo o la señal en vivo.' };
     setMsgs((m) => [...m, { id, from: 'user', text: q }, bot]);
     setInput('');
-    if (narratorOn && res) void narrate(res.entry.answer, 'assistant-' + id);
+    if (narratorOn && res) void narrate(res.entry.speech ?? res.entry.answer, 'assistant-' + id);
   };
 
   const listen = () => {
@@ -143,7 +143,7 @@ export function Assistant() {
                             {m.entry.link.label} <ArrowUpRight size={12} />
                           </button>
                         )}
-                        <button onClick={() => toggleNarration(m.text, 'assistant-' + m.id)} className="inline-flex items-center gap-1 rounded-full border border-white/15 px-3 py-1 text-[11px] text-tin hover:text-bone" aria-label="Escuchar respuesta">
+                        <button onClick={() => toggleNarration(m.entry?.speech ?? m.text, 'assistant-' + m.id)} className="inline-flex items-center gap-1 rounded-full border border-white/15 px-3 py-1 text-[11px] text-tin hover:text-bone" aria-label="Escuchar respuesta">
                           <Volume2 size={12} /> Oír
                         </button>
                       </div>

@@ -4,6 +4,7 @@ import { AudioLines, Captions, Music2, SlidersHorizontal, Volume2, VolumeX } fro
 import { useExperience, sfx } from '../../stores/useExperience';
 import { narrator } from '../../lib/narrator';
 import { toggleNarration } from '../../stores/useNarration';
+import { VOICE_TEST } from '../../lib/narrationTexts';
 import { useQuality, type Tier } from '../../stores/useQuality';
 
 function Toggle({ on, onClick, label, children }: { on: boolean; onClick: () => void; label: string; children: React.ReactNode }) {
@@ -80,9 +81,30 @@ export function SoundConsole() {
             className="panel rounded-2xl p-5 w-[300px] text-sm"
           >
             <p className="eyebrow mb-4">Narrador</p>
-            {narrator.supported ? (
+            <div className="grid grid-cols-2 gap-1 rounded-lg bg-ore p-1">
+              {[
+                [true, 'Voz grabada'],
+                [false, 'Del navegador'],
+              ].map(([val, label]) => (
+                <button
+                  key={String(val)}
+                  onClick={() => s.setRecordedVoice(val as boolean)}
+                  disabled={val === true && !narrator.hasRecordings}
+                  className={`rounded-md py-1.5 text-[11px] font-mono tracking-[0.08em] uppercase transition-colors disabled:opacity-40 ${
+                    s.recordedVoice === val ? 'bg-amber text-ink' : 'text-tin hover:text-bone'
+                  }`}
+                >
+                  {label as string}
+                </button>
+              ))}
+            </div>
+            {s.recordedVoice && narrator.hasRecordings ? (
+              <p className="mt-2 text-[11px] text-dust leading-relaxed">
+                {narrator.recordedLabel || 'Voz neuronal grabada'} · {narrator.recorded.size} frases. Suena igual en cualquier navegador.
+              </p>
+            ) : narrator.supported ? (
               <>
-                <label className="block text-xs text-tin mb-1.5" htmlFor="voice">
+                <label className="block text-xs text-tin mt-3 mb-1.5" htmlFor="voice">
                   Voz ({voices.length} en español)
                 </label>
                 <select
@@ -97,32 +119,32 @@ export function SoundConsole() {
                     </option>
                   ))}
                 </select>
-                <label className="block text-xs text-tin mt-4 mb-1.5">Velocidad · {rate.toFixed(2)}×</label>
-                <input
-                  type="range"
-                  min={0.8}
-                  max={1.25}
-                  step={0.05}
-                  value={rate}
-                  onChange={(e) => {
-                    const v = parseFloat(e.target.value);
-                    narrator.rate = v;
-                    setRate(v);
-                  }}
-                  className="w-full range-amber"
-                  style={{ ['--fill' as string]: `${((rate - 0.8) / 0.45) * 100}%` }}
-                />
-                <button
-                  onClick={() => toggleNarration('Hola. Soy la voz del museo virtual de Radio Pío Doce.', 'voice-test')}
-                  className="mt-4 w-full rounded-lg border border-amber/40 text-amber py-2 text-xs font-mono tracking-[0.15em] uppercase hover:bg-amber hover:text-ink transition-colors"
-                >
-                  Probar voz
-                </button>
-                <p className="mt-3 text-[11px] text-dust leading-relaxed">✦ = voz neuronal. En Microsoft Edge aparecen voces de Bolivia (Marcelo, Sofía).</p>
+                <p className="mt-2 text-[11px] text-dust leading-relaxed">✦ = voz neuronal. En Microsoft Edge aparecen voces de Bolivia.</p>
               </>
             ) : (
-              <p className="text-tin text-xs leading-relaxed">Este navegador no ofrece síntesis de voz. Los textos se mostrarán como subtítulos.</p>
+              <p className="mt-2 text-tin text-xs leading-relaxed">Este navegador no ofrece síntesis de voz; se mostrarán subtítulos.</p>
             )}
+            <label className="block text-xs text-tin mt-4 mb-1.5">Velocidad · {rate.toFixed(2)}×</label>
+            <input
+              type="range"
+              min={0.8}
+              max={1.25}
+              step={0.05}
+              value={rate}
+              onChange={(e) => {
+                const v = parseFloat(e.target.value);
+                narrator.rate = v;
+                setRate(v);
+              }}
+              className="w-full range-amber"
+              style={{ ['--fill' as string]: `${((rate - 0.8) / 0.45) * 100}%` }}
+            />
+            <button
+              onClick={() => toggleNarration(VOICE_TEST, 'voice-test')}
+              className="mt-4 w-full rounded-lg border border-amber/40 text-amber py-2 text-xs font-mono tracking-[0.15em] uppercase hover:bg-amber hover:text-ink transition-colors"
+            >
+              Probar voz
+            </button>
             <QualityPicker />
           </motion.div>
         )}

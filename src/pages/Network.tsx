@@ -84,17 +84,6 @@ function BoliviaMap({ zoom, chain, selected, onSelect }: { zoom: boolean; chain:
           <stop offset="0" stopColor="#221b14" />
           <stop offset="1" stopColor="#15110d" />
         </linearGradient>
-        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation={4 * scale} result="b" />
-          <feMerge>
-            <feMergeNode in="b" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <radialGradient id="wave">
-          <stop offset="0.6" stopColor="rgba(242,165,65,0)" />
-          <stop offset="1" stopColor="rgba(242,165,65,0.5)" />
-        </radialGradient>
       </defs>
       <rect x={-500} y={-500} width={MAP_W + 1000} height={MAP_H + 1000} fill="#0b0907" onClick={() => onSelect(null)} />
       {grid.map((g, i) => (
@@ -110,7 +99,10 @@ function BoliviaMap({ zoom, chain, selected, onSelect }: { zoom: boolean; chain:
       {Object.entries(NEIGHBOR_PATHS).map(([k, d]) => (
         <path key={k} d={d} fill="#110e0b" stroke="rgba(237,229,211,0.08)" strokeWidth={1 * scale} />
       ))}
-      <path d={BOLIVIA_PATH} fill="url(#land)" stroke="rgba(242,165,65,0.55)" strokeWidth={1.6 * scale} filter="url(#glow)" />
+      {/* brillo del contorno con trazos superpuestos (un filtro SVG se recalcularía en cada cuadro) */}
+      <path d={BOLIVIA_PATH} fill="none" stroke="rgba(242,165,65,0.08)" strokeWidth={9 * scale} strokeLinejoin="round" />
+      <path d={BOLIVIA_PATH} fill="none" stroke="rgba(242,165,65,0.14)" strokeWidth={4.5 * scale} strokeLinejoin="round" />
+      <path d={BOLIVIA_PATH} fill="url(#land)" stroke="rgba(242,165,65,0.6)" strokeWidth={1.6 * scale} strokeLinejoin="round" />
       <path d={TITICACA_PATH} fill="#0e1824" stroke="rgba(120,160,210,0.35)" strokeWidth={1 * scale} />
 
       {/* ondas desde Llallagua */}

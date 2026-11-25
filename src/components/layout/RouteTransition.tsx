@@ -46,7 +46,7 @@ export function RouteTransition() {
     scrollToTop(true);
     stopNarration();
     setN((v) => v + 1);
-    sfx.static(0.5, 0.14);
+    sfx.static(0.35, 0.12);
   }, [pathname]);
 
   const room = routeByPath(pathname);
@@ -63,7 +63,7 @@ export function RouteTransition() {
           className="fixed inset-0 z-[80] pointer-events-none bg-ink"
           initial={{ opacity: 1 }}
           animate={{ opacity: 0 }}
-          transition={{ duration: 0.9, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.55, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
         >
           <StaticCanvas />
           <div className="absolute inset-0 scanlines" />
@@ -71,7 +71,7 @@ export function RouteTransition() {
             className="absolute inset-0 flex flex-col items-center justify-center"
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: [0, 1, 1, 0], scale: 1 }}
-            transition={{ duration: 0.9, times: [0, 0.2, 0.7, 1] }}
+            transition={{ duration: 0.6, times: [0, 0.2, 0.7, 1] }}
           >
             <span className="font-mono text-xs tracking-[0.4em] text-amber">SALA {room.number}</span>
             <span className="mt-3 font-display text-4xl md:text-6xl">{room.label}</span>

@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { CameraControls, Environment, Html, Lightformer, MeshReflectorMaterial, PerformanceMonitor, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
@@ -10,6 +10,7 @@ import { MinerHelmet } from '../models/MinerHelmet';
 import { MineCart } from '../models/MineCart';
 import { Dynamite } from '../models/Dynamite';
 import { Effects } from '../Effects';
+import { CompileGate } from '../CompileGate';
 import { GltfProp, Lantern } from '../models/Props';
 import { PROP_URLS } from '../models/propUrls';
 import { plaqueTexture, plasterTexture } from '../textures/procedural';
@@ -404,11 +405,18 @@ export function MuseumScene() {
   const downgrade = useQuality((s) => s.downgrade);
   const q = qualityParams(tier);
   const select = useMuseumStore((s) => s.select);
+  // compilación paralela de shaders antes del primer cuadro (evita congelar la página)
+  const [compiledTier, setCompiledTier] = useState<string | null>(null);
+  const compiled = compiledTier === tier;
+  const onReady = useCallback(() => setCompiledTier(tier), [tier]);
   return (
+    <>
     <Canvas
       key={tier}
       shadows={q.shadows}
       dpr={q.dpr}
+      frameloop={compiled ? 'always' : 'never'}
+      style={{ opacity: compiled ? 1 : 0, transition: 'opacity 1.2s ease' }}
       camera={{ position: [0, 5.6, 13.2], fov: 45, near: 0.1, far: 80 }}
       gl={{ antialias: tier === 'low', powerPreference: 'high-performance' }}
       onPointerMissed={() => select(null)}
@@ -440,11 +448,18 @@ export function MuseumScene() {
         {MUSEUM_PIECES.map((p, i) => (
           <Pedestal key={p.id} piece={p} index={i} total={MUSEUM_PIECES.length} q={q} />
         ))}
+        <CompileGate onReady={onReady} />
       </Suspense>
       <FocusLight />
       <CameraDirector />
       <Effects enabled={q.effects} msaa={q.msaa} bloom={0.65} threshold={0.88} vignette={0.8} />
     </Canvas>
+    {!compiled && (
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <span className="font-mono text-xs tracking-[0.35em] uppercase text-amber blink-soft">Preparando la sala…</span>
+      </div>
+    )}
+    </>
   );
 }
 

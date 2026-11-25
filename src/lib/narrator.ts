@@ -1,14 +1,18 @@
 /**
- * Narrador del museo basado en la Web Speech API (speechSynthesis).
+ * Narrador del museo.
  *
- * - Elige automáticamente la mejor voz en español disponible (prioriza voces
- *   neuronales de Bolivia / Latinoamérica: p. ej. "Microsoft Marcelo Online
- *   (Natural) - Spanish (Bolivia)" en Microsoft Edge).
- * - Divide el texto en frases para evitar el corte de ~15 s de Chrome y para
- *   sincronizar los subtítulos.
- * - Si la síntesis de voz no está disponible, simula la duración de lectura
- *   para que los subtítulos y el recorrido guiado sigan funcionando.
+ * 1. Voz grabada (preferida): cada frase está pregenerada como MP3 en
+ *    public/voz con una voz neuronal boliviana (es-BO-MarceloNeural). Suena
+ *    igual en cualquier navegador y no depende de las voces instaladas.
+ * 2. Respaldo: Web Speech API (speechSynthesis) para frases sin grabación.
+ *    Elige la mejor voz en español disponible y divide el texto en frases para
+ *    evitar el corte de ~15 s de Chrome.
+ * 3. Sin sonido: muestra los subtítulos con la duración estimada de lectura.
  */
+import { audio } from './audio/engine';
+import { normalizeForSpeech, splitSentences, voiceKey } from './speechText';
+
+export { normalizeForSpeech, splitSentences } from './speechText';
 
 export type NarrationEvent =
   | { type: 'start'; id: string }
@@ -18,6 +22,7 @@ export type NarrationEvent =
 type Listener = (e: NarrationEvent) => void;
 
 const PREFERRED_LANGS = ['es-BO', 'es-PE', 'es-419', 'es-MX', 'es-US', 'es-AR', 'es-CL', 'es-CO', 'es-ES'];
+const VOICE_DIR = `${import.meta.env.BASE_URL}voz/`;
 
 function scoreVoice(v: SpeechSynthesisVoice): number {
   const name = v.name.toLowerCase();
@@ -29,63 +34,13 @@ function scoreVoice(v: SpeechSynthesisVoice): number {
   if (name.includes('natural')) s += 400;
   else if (name.includes('online')) s += 250;
   if (name.includes('google')) s += 150;
-  // voz masculina grave tipo locutor de radio
   if (name.includes('marcelo')) s += 120;
   if (name.includes('sofia') || name.includes('sofía')) s += 60;
-  if (name.includes('jorge') || name.includes('alonso') || name.includes('gonzalo') || name.includes('tomas') || name.includes('raul') || name.includes('pablo')) s += 25;
   if (v.localService) s += 5;
   return s;
 }
 
-/** Ajusta la pronunciación de siglas y números romanos para la voz sintética. */
-export function normalizeForSpeech(text: string) {
-  return text
-    .replace(/Siglo XX/g, 'Siglo Veinte')
-    .replace(/Pío XII/g, 'Pío Doce')
-    .replace(/Pio XII/g, 'Pío Doce')
-    .replace(/\bXII\b/g, 'Doce')
-    .replace(/\bsiglo XX\b/gi, 'siglo veinte')
-    .replace(/\bD\.?\s?S\.?\s?21060\b/g, 'Decreto Supremo veintiún mil sesenta')
-    .replace(/\b21060\b/g, 'veintiún mil sesenta')
-    .replace(/\bFSTMB\b/g, 'Federación Sindical de Trabajadores Mineros de Bolivia')
-    .replace(/\bCOMIBOL\b/g, 'Comibol')
-    .replace(/\bALER\b/g, 'Aler')
-    .replace(/\bERBOL\b/g, 'Erbol')
-    .replace(/r\.p\.m\./g, 'revoluciones por minuto')
-    .replace(/m s\. n\. m\./g, 'metros sobre el nivel del mar')
-    .replace(/\bkHz\b/g, 'kilohercios')
-    .replace(/\bMHz\b/g, 'megahercios')
-    .replace(/\bOMI\b/g, 'oblato')
-    .replace(/–/g, ', ')
-    .replace(/[«»“”"]/g, '');
-}
-
-export function splitSentences(text: string): string[] {
-  const clean = text.replace(/\s+/g, ' ').trim();
-  if (!clean) return [];
-  const raw = clean.match(/[^.!?…;:]+[.!?…;:]+["»”)]?\s*|[^.!?…;:]+$/g) ?? [clean];
-  const out: string[] = [];
-  let buf = '';
-  for (const piece of raw) {
-    const p = piece.trim();
-    if (!p) continue;
-    if ((buf + ' ' + p).trim().length < 60) {
-      buf = (buf + ' ' + p).trim();
-      continue;
-    }
-    if (buf) out.push(buf);
-    buf = p;
-    // fragmentos muy largos: cortar en comas
-    while (buf.length > 220) {
-      const cut = buf.lastIndexOf(',', 200);
-      if (cut < 60) break;
-      out.push(buf.slice(0, cut + 1).trim());
-      buf = buf.slice(cut + 1).trim();
-    }
-  }
-  if (buf) out.push(buf);
-  return out;
-}
+const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 
 class Narrator {
   readonly supported = typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
@@ -93,6 +48,12 @@ class Narrator {
   voice: SpeechSynthesisVoice | null = null;
   rate = 1;
   pitch = 0.98;
+  /** Usar las grabaciones pregeneradas cuando existan. */
+  useRecorded = true;
+  /** Claves de las frases grabadas disponibles. */
+  recorded = new Set<string>();
+  recordedLabel = '';
+  private manifest: Promise<void> | null = null;
   private preferredURI: string | null = null;
   private listeners = new Set<Listener>();
   private voiceListeners = new Set<() => void>();
@@ -100,17 +61,43 @@ class Narrator {
   private currentId: string | null = null;
   private keepAlive: number | null = null;
   private silentTimer: number | null = null;
+  private pendingResolve: ((ok: boolean) => void) | null = null;
 
   constructor() {
+    if (typeof window === 'undefined') return;
+    void this.loadManifest();
     if (!this.supported) return;
     const load = () => {
       const all = window.speechSynthesis.getVoices();
       this.voices = all.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith('es')).sort((a, b) => scoreVoice(b) - scoreVoice(a));
       this.pick();
-      this.voiceListeners.forEach((l) => l());
+      this.notifyVoices();
     };
     load();
     window.speechSynthesis.addEventListener?.('voiceschanged', load);
+  }
+
+  /** Carga la lista de frases grabadas (public/voz/manifest.json). */
+  loadManifest(): Promise<void> {
+    if (this.manifest) return this.manifest;
+    this.manifest = fetch(`${VOICE_DIR}manifest.json`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((m: { files?: Record<string, number>; voiceLabel?: string } | null) => {
+        if (!m?.files) return;
+        this.recorded = new Set(Object.keys(m.files));
+        this.recordedLabel = m.voiceLabel ?? '';
+        this.notifyVoices();
+      })
+      .catch(() => undefined);
+    return this.manifest;
+  }
+
+  get hasRecordings() {
+    return this.recorded.size > 0;
+  }
+
+  private notifyVoices() {
+    this.voiceListeners.forEach((l) => l());
   }
 
   private pick() {
@@ -121,7 +108,12 @@ class Narrator {
   setPreferredVoice(uri: string | null) {
     this.preferredURI = uri;
     this.pick();
-    this.voiceListeners.forEach((l) => l());
+    this.notifyVoices();
+  }
+
+  setUseRecorded(v: boolean) {
+    this.useRecorded = v;
+    this.notifyVoices();
   }
 
   onVoices(l: () => void): () => void {
@@ -158,10 +150,9 @@ class Narrator {
     const pending = this.pendingResolve;
     this.pendingResolve = null;
     pending?.(false);
+    audio.stopVoice();
     if (this.supported) window.speechSynthesis.cancel();
   }
-
-  private pendingResolve: ((ok: boolean) => void) | null = null;
 
   private clearTimers() {
     if (this.keepAlive) window.clearInterval(this.keepAlive);
@@ -170,9 +161,43 @@ class Narrator {
     this.silentTimer = null;
   }
 
+  /** Lee una frase con la Web Speech API. Resuelve al terminar. */
+  private speakLine(line: string, token: number): Promise<void> {
+    return new Promise((resolve) => {
+      const u = new SpeechSynthesisUtterance(normalizeForSpeech(line));
+      u.lang = this.voice?.lang ?? 'es-419';
+      if (this.voice) u.voice = this.voice;
+      u.rate = this.rate;
+      u.pitch = this.pitch;
+      let done = false;
+      const go = () => {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+      u.onend = go;
+      u.onerror = go;
+      const words = line.split(/\s+/).length;
+      // salvaguarda: si el motor no dispara onend
+      window.setTimeout(() => {
+        if (!done && token === this.token && !window.speechSynthesis.speaking) go();
+      }, Math.max(4000, words * 700));
+      if (!this.keepAlive) {
+        // Chrome pausa síntesis largas: un "resume" periódico la mantiene viva
+        this.keepAlive = window.setInterval(() => {
+          if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+          }
+        }, 9000);
+      }
+      window.speechSynthesis.speak(u);
+    });
+  }
+
   /**
    * Narra un texto. `voiced=false` reproduce solo los subtítulos con la
-   * duración estimada de lectura (modo silencioso / sin soporte de voz).
+   * duración estimada de lectura (modo silencioso).
    * Resuelve `true` si terminó, `false` si se canceló.
    */
   speak(text: string, id = 'n' + Date.now(), voiced = true): Promise<boolean> {
@@ -184,60 +209,46 @@ class Narrator {
 
     return new Promise<boolean>((resolve) => {
       this.pendingResolve = resolve;
-      const finish = (ok: boolean) => {
-        if (token !== this.token) return resolve(false);
+      const alive = () => token === this.token;
+
+      const run = async () => {
+        await this.loadManifest();
+        for (let i = 0; i < lines.length; i++) {
+          if (!alive()) return resolve(false);
+          const line = lines[i];
+          this.emit({ type: 'line', id, text: line, index: i, total: lines.length });
+
+          if (!voiced) {
+            const words = line.split(/\s+/).length;
+            await new Promise<void>((r) => (this.silentTimer = window.setTimeout(r, Math.max(1600, words * 360))));
+            continue;
+          }
+
+          const key = voiceKey(normalizeForSpeech(line));
+          if (this.useRecorded && this.recorded.has(key)) {
+            // precarga de la frase siguiente para que no haya pausas
+            const nextLine = lines[i + 1];
+            if (nextLine) audio.preloadVoice(`${VOICE_DIR}${voiceKey(normalizeForSpeech(nextLine))}.mp3`);
+            const ok = await audio.playVoice(`${VOICE_DIR}${key}.mp3`, this.rate);
+            if (!alive()) return resolve(false);
+            if (ok) {
+              await wait(140);
+              continue;
+            }
+            // si el archivo falla, se lee con la voz del navegador
+          }
+
+          if (this.supported) await this.speakLine(line, token);
+          else await wait(Math.max(1600, line.split(/\s+/).length * 360));
+        }
+        if (!alive()) return resolve(false);
         this.clearTimers();
         this.currentId = null;
         this.pendingResolve = null;
-        this.emit({ type: 'end', id, cancelled: !ok });
-        resolve(ok);
+        this.emit({ type: 'end', id, cancelled: false });
+        resolve(true);
       };
-
-      const useVoice = voiced && this.supported;
-      if (useVoice) {
-        // Chrome pausa síntesis largas: un "resume" periódico la mantiene viva
-        this.keepAlive = window.setInterval(() => {
-          if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
-            window.speechSynthesis.pause();
-            window.speechSynthesis.resume();
-          }
-        }, 9000);
-      }
-
-      const next = (i: number) => {
-        if (token !== this.token) return resolve(false);
-        if (i >= lines.length) return finish(true);
-        const line = lines[i];
-        this.emit({ type: 'line', id, text: line, index: i, total: lines.length });
-        if (!useVoice) {
-          const words = line.split(/\s+/).length;
-          this.silentTimer = window.setTimeout(() => next(i + 1), Math.max(1600, words * 360));
-          return;
-        }
-        const u = new SpeechSynthesisUtterance(normalizeForSpeech(line));
-        u.lang = this.voice?.lang ?? 'es-419';
-        if (this.voice) u.voice = this.voice;
-        u.rate = this.rate;
-        u.pitch = this.pitch;
-        let done = false;
-        const go = () => {
-          if (done) return;
-          done = true;
-          next(i + 1);
-        };
-        u.onend = go;
-        u.onerror = (ev) => {
-          if (ev.error === 'interrupted' || ev.error === 'canceled') return;
-          go();
-        };
-        // salvaguarda: si el motor no dispara onend
-        const words = line.split(/\s+/).length;
-        window.setTimeout(() => {
-          if (!done && token === this.token && !window.speechSynthesis.speaking) go();
-        }, Math.max(4000, words * 700));
-        window.speechSynthesis.speak(u);
-      };
-      next(0);
+      void run();
     });
   }
 }

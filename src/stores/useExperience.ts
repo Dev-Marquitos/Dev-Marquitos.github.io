@@ -13,6 +13,7 @@ interface ExperienceState {
   sfxOn: boolean;
   narratorOn: boolean;
   subtitlesOn: boolean;
+  recordedVoice: boolean;
   voiceURI: string | null;
   menuOpen: boolean;
   assistantOpen: boolean;
@@ -24,6 +25,7 @@ interface ExperienceState {
   setSfxOn: (v: boolean) => void;
   setNarratorOn: (v: boolean) => void;
   setSubtitlesOn: (v: boolean) => void;
+  setRecordedVoice: (v: boolean) => void;
   setVoiceURI: (uri: string | null) => void;
   setMenuOpen: (v: boolean) => void;
   setAssistantOpen: (v: boolean) => void;
@@ -40,6 +42,7 @@ export const useExperience = create<ExperienceState>()(
       sfxOn: true,
       narratorOn: true,
       subtitlesOn: true,
+      recordedVoice: true,
       voiceURI: null,
       menuOpen: false,
       assistantOpen: false,
@@ -74,6 +77,11 @@ export const useExperience = create<ExperienceState>()(
         set({ narratorOn });
       },
       setSubtitlesOn: (subtitlesOn) => set({ subtitlesOn }),
+      setRecordedVoice: (recordedVoice) => {
+        narrator.cancel();
+        narrator.setUseRecorded(recordedVoice);
+        set({ recordedVoice });
+      },
       setVoiceURI: (voiceURI) => {
         narrator.setPreferredVoice(voiceURI);
         set({ voiceURI });
@@ -90,10 +98,12 @@ export const useExperience = create<ExperienceState>()(
         sfxOn: s.sfxOn,
         narratorOn: s.narratorOn,
         subtitlesOn: s.subtitlesOn,
+        recordedVoice: s.recordedVoice,
         voiceURI: s.voiceURI,
       }),
       onRehydrateStorage: () => (state) => {
         if (state?.voiceURI) narrator.setPreferredVoice(state.voiceURI);
+        if (state) narrator.setUseRecorded(state.recordedVoice ?? true);
       },
     },
   ),

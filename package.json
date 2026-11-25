@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "deploy": "npm run build && gh-pages -d dist --nojekyll -m \"Publicar museo virtual Radio Pío XII\""
+    "deploy": "npm run build && gh-pages -d dist --nojekyll -m \"Publicar museo virtual Radio Pío XII\"",
+    "voz": "node scripts/exportar-narraciones.mjs && python scripts/generar_voz.py"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

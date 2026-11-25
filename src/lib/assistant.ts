@@ -13,6 +13,8 @@ export interface KBEntry {
   answer: string;
   link?: { path: string; label: string };
   keys?: string;
+  /** texto que lee el narrador (sin citas de fuentes) */
+  speech?: string;
 }
 
 const STOP = new Set(
@@ -178,17 +180,29 @@ const EXTRA: KBEntry[] = [
 function build(): KBEntry[] {
   const out: KBEntry[] = [...EXTRA];
   ALL_EVENTS.forEach((e, i) =>
-    out.push({ id: 'ev' + i, title: `${e.year} · ${e.title}`, answer: `${e.date ?? e.year}: ${e.text} (Fuente: ${e.source})`, link: { path: '/historia', label: 'Ver en la línea de tiempo' }, keys: e.era }),
+    out.push({
+      id: 'ev' + i,
+      title: `${e.year} · ${e.title}`,
+      answer: `${e.date ?? e.year}: ${e.text} (Fuente: ${e.source})`,
+      speech: `${e.date ?? e.year}: ${e.text}`,
+      link: { path: '/historia', label: 'Ver en la línea de tiempo' },
+      keys: e.era,
+    }),
   );
   MUSEUM_PIECES.forEach((p) =>
     out.push({ id: 'pz' + p.id, title: p.title, answer: `${p.short} ${p.context}`, link: { path: '/museo', label: 'Ver la pieza en 3D' }, keys: p.facts.map((f) => f.join(' ')).join(' ') }),
   );
-  PEOPLE.forEach((p) => out.push({ id: 'pp' + p.id, title: p.name, answer: `${p.name} (${p.life}), ${p.role.toLowerCase()}. ${p.bio}`, link: { path: '/voces', label: 'Ir a Voces' } }));
+  PEOPLE.forEach((p) =>
+    out.push({ id: 'pp' + p.id, title: p.name, answer: `${p.name} (${p.life}), ${p.role.charAt(0).toLowerCase()}${p.role.slice(1)}. ${p.bio}`, link: { path: '/voces', label: 'Ir a Voces' } }),
+  );
   NETWORK.forEach((s) => out.push({ id: 'nt' + s.id, title: s.name, answer: `${s.name} (${s.place}${s.year ? ', ' + s.year : ''}): ${s.text}`, link: { path: '/red-minera', label: 'Ver en el mapa' } }));
   return out;
 }
 
 const KB = build();
+
+/** Respuestas del asistente (se graban como audio). */
+export const KB_ANSWERS = KB.map((e) => e.speech ?? e.answer);
 const DOCS = KB.map((e) => {
   const tokens = normalize(`${e.title} ${e.title} ${e.keys ?? ''} ${e.keys ?? ''} ${e.answer}`);
   const tf = new Map<string, number>();

@@ -10,6 +10,7 @@ import { runMuseumTour } from '../lib/museumTour';
 import { NARRATION } from '../data/narration';
 import { useExperience, sfx } from '../stores/useExperience';
 import { useTour } from '../components/experience/tour';
+import { pieceText } from '../lib/narrationTexts';
 
 const MuseumScene = lazy(() => import('../components/three/scenes/MuseumScene'));
 
@@ -85,7 +86,7 @@ function InfoPanel() {
               ))}
             </dl>
             <div className="mt-6 flex flex-wrap gap-2">
-              <NarrateButton text={`${piece.title}. ${piece.short} ${piece.context}`} id={'piece-' + piece.id} />
+              <NarrateButton text={pieceText(piece, true)} id={'piece-' + piece.id} />
               <button
                 onClick={() => setInspect(!inspect)}
                 className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 font-mono text-[11px] tracking-[0.18em] uppercase transition-colors ${
@@ -125,7 +126,7 @@ export default function Museum() {
     if (!selected || touring || globalTour) return;
     const p = pieceById(selected);
     if (!p || !useExperience.getState().narratorOn) return;
-    const t = window.setTimeout(() => void narrate(`${p.title}. ${p.short}`, 'piece-' + p.id), 900);
+    const t = window.setTimeout(() => void narrate(pieceText(p), 'piece-' + p.id), 900);
     return () => window.clearTimeout(t);
   }, [selected, touring, globalTour]);
 

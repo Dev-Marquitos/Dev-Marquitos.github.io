@@ -6,13 +6,14 @@ gsap.registerPlugin(ScrollTrigger);
 
 let lenis: Lenis | null = null;
 
-export function initSmoothScroll() {
+export function initSmoothScroll(native = false) {
   if (lenis) return lenis;
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   lenis = new Lenis({
-    duration: 1.15,
-    smoothWheel: !reduce,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    // interpolación corta: suave pero sin sensación de "pesadez"
+    lerp: 0.16,
+    wheelMultiplier: 1.1,
+    smoothWheel: !reduce && !native,
   });
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((time) => lenis?.raf(time * 1000));

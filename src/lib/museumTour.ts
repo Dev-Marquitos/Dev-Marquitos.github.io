@@ -1,6 +1,7 @@
 import { useMuseumStore } from '../stores/useMuseumStore';
 import { narrate } from '../stores/useNarration';
 import { MUSEUM_PIECES } from '../data/museum';
+import { pieceText } from './narrationTexts';
 
 const wait = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
 
@@ -14,7 +15,7 @@ export async function runMuseumTour({ shortTexts = false, isAlive = () => true }
     useMuseumStore.getState().select(p.id);
     await wait(1900);
     if (!touring()) break;
-    const text = shortTexts ? p.short : `${p.title}. ${p.short} ${p.context}`;
+    const text = pieceText(p, !shortTexts);
     await narrate(text, 'piece-' + p.id, { force: true });
     await wait(700);
   }

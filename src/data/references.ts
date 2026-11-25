@@ -19,6 +19,7 @@ export const ASSET_CREDITS: { what: string; who: string; license: string }[] = [
   { what: 'Picota (picke_dirty_01)', who: 'Dennis Halbeck · Poly Haven', license: 'CC0' },
   { what: 'Caja metálica (old_military_crate)', who: 'Jack Mava · Poly Haven', license: 'CC0' },
   { what: 'Barril de explosivos (Barrel_01)', who: 'Jorge Camacho · Poly Haven', license: 'CC0' },
+  { what: 'Voz del narrador: Marcelo (Bolivia)', who: 'Voz neuronal es-BO-MarceloNeural de Microsoft, generada con edge-tts', license: 'Uso académico no comercial' },
   { what: 'Contornos de Bolivia y países vecinos', who: 'Natural Earth (1:50 m)', license: 'Dominio público' },
   { what: 'Tipografías Fraunces, Inter y JetBrains Mono', who: 'Undercase Type · Rasmus Andersson · JetBrains', license: 'SIL Open Font License' },
   { what: 'Señal en vivo de Radio Pío XII', who: 'Servidor de streaming de ALER', license: 'Enlace a la transmisión pública' },

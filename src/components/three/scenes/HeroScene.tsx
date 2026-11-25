@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, Lightformer, PerformanceMonitor, RoundedBox, Sparkles, Stars } from '@react-three/drei';
 import * as THREE from 'three';
@@ -8,6 +8,7 @@ import { MinerHelmet } from '../models/MinerHelmet';
 import { AntennaTower, CampLights, Headframe, Moon, Mountains } from '../models/Landscape';
 import { Effects } from '../Effects';
 import { Lantern } from '../models/Props';
+import { CompileGate } from '../CompileGate';
 import { plasterTexture, scriptPaperTexture, woodTexture } from '../textures/procedural';
 import { audio, type Tuner } from '../../../lib/audio/engine';
 import { useExperience } from '../../../stores/useExperience';
@@ -166,12 +167,17 @@ export function HeroScene({ progress, active = true }: { progress: RefObject<num
   const downgrade = useQuality((s) => s.downgrade);
   const q = qualityParams(tier);
   const [dpr, setDpr] = useState<number | [number, number]>(q.dpr);
+  // los shaders se compilan en paralelo antes del primer cuadro (evita congelar la página)
+  const [compiledTier, setCompiledTier] = useState<string | null>(null);
+  const compiled = compiledTier === tier;
+  const onReady = useCallback(() => setCompiledTier(tier), [tier]);
   return (
     <Canvas
       key={tier}
       shadows={q.shadows}
       dpr={dpr}
-      frameloop={active ? 'always' : 'never'}
+      frameloop={active && compiled ? 'always' : 'never'}
+      style={{ opacity: compiled ? 1 : 0, transition: 'opacity 1.4s ease' }}
       camera={{ position: [-1.55, 0.8, 8.2], fov: 38, near: 0.1, far: 220 }}
       gl={{ antialias: tier === 'low', powerPreference: 'high-performance' }}
     >
@@ -207,6 +213,7 @@ export function HeroScene({ progress, active = true }: { progress: RefObject<num
         </Environment>
         <Outdoors stars={q.stars} />
         {q.particles && <Sparkles count={45} scale={[7, 3.5, 2.5]} position={[0, 0.6, 0]} size={1.1} speed={0.15} opacity={0.3} color="#ffd9a0" />}
+        <CompileGate onReady={onReady} />
       </Suspense>
 
       <Rig progress={progress} />

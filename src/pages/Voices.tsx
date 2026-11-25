@@ -8,6 +8,7 @@ import { Footer } from '../components/layout/Footer';
 import { NarrateButton, Reveal, SplitTitle } from '../components/ui/Reveal';
 import { sfx } from '../stores/useExperience';
 import { setScrollLocked } from '../lib/smoothScroll';
+import { personText, quoteText } from '../lib/narrationTexts';
 
 const PORTRAIT: Record<string, keyof typeof IMAGES> = {
   domitila: 'domitila',
@@ -80,7 +81,7 @@ function PersonModal({ p, onClose }: { p: Person | null; onClose: () => void }) 
               <p className="mt-2 font-display-soft italic text-lg text-tin">{p.role}</p>
               <p className="mt-6 text-bone/90 leading-relaxed">{p.bio}</p>
               <div className="mt-8 flex flex-wrap items-center gap-4">
-                <NarrateButton text={`${p.name}. ${p.role}. ${p.bio}`} id={'person-' + p.id} />
+                <NarrateButton text={personText(p)} id={'person-' + p.id} />
                 <span className="text-[11px] text-dust">Fuente: {p.source}</span>
               </div>
               {img && (
@@ -198,7 +199,7 @@ export default function Voices() {
                       <span className="text-amber">{q.author}</span>
                       <span className="text-dust"> · {q.context}</span>
                     </span>
-                    <NarrateButton text={`${q.text} ${q.author}.`} id={'wall-' + i} label="Oír" />
+                    <NarrateButton text={quoteText(q)} id={'wall-' + i} label="Oír" />
                   </figcaption>
                 </figure>
               </Reveal>

@@ -708,6 +708,66 @@ export class AudioEngine {
     };
   }
 
+  /* --------------------------- voz grabada ---------------------------- */
+
+  private voiceEl: HTMLAudioElement | null = null;
+  private voiceResolve: ((ok: boolean) => void) | null = null;
+  private preloaded = new Set<string>();
+
+  private ensureVoiceElement() {
+    if (this.voiceEl) return this.voiceEl;
+    const el = new Audio();
+    el.preload = 'auto';
+    if (this.ctx) {
+      // la voz pasa por el bus maestro: respeta el volumen general y el compresor
+      const src = this.ctx.createMediaElementSource(el);
+      const gain = this.ctx.createGain();
+      gain.gain.value = 1.15;
+      src.connect(gain).connect(this.master);
+    }
+    this.voiceEl = el;
+    return el;
+  }
+
+  /** Reproduce una frase grabada. Resuelve `true` al terminar, `false` si falla o se detiene. */
+  playVoice(url: string, rate = 1): Promise<boolean> {
+    this.unlock();
+    const el = this.ensureVoiceElement();
+    this.stopVoice();
+    return new Promise<boolean>((resolve) => {
+      this.voiceResolve = resolve;
+      const done = (ok: boolean) => {
+        el.onended = null;
+        el.onerror = null;
+        if (this.voiceResolve === resolve) {
+          this.voiceResolve = null;
+          resolve(ok);
+        }
+      };
+      el.onended = () => done(true);
+      el.onerror = () => done(false);
+      el.src = url;
+      el.playbackRate = rate;
+      el.preservesPitch = true;
+      if (!this.ctx) el.volume = this.soundOn ? 1 : 0;
+      el.play().catch(() => done(false));
+    });
+  }
+
+  stopVoice() {
+    if (this.voiceEl && !this.voiceEl.paused) this.voiceEl.pause();
+    const r = this.voiceResolve;
+    this.voiceResolve = null;
+    r?.(false);
+  }
+
+  /** Calienta la caché HTTP con la siguiente frase. */
+  preloadVoice(url: string) {
+    if (this.preloaded.has(url)) return;
+    this.preloaded.add(url);
+    void fetch(url).catch(() => this.preloaded.delete(url));
+  }
+
   /* ------------------------------ stream ------------------------------- */
 
   onStream(listener: StreamListener): () => void {

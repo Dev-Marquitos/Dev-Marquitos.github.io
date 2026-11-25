@@ -13,6 +13,7 @@ import { Counter, NarrateButton, Reveal, SplitTitle } from '../components/ui/Rev
 import { useRadio } from '../stores/useRadio';
 import { useExperience } from '../stores/useExperience';
 import { useQuality } from '../stores/useQuality';
+import { quoteText } from '../lib/narrationTexts';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -298,7 +299,7 @@ function Quotes() {
               <button key={k} onClick={() => setI(k)} className={`h-1.5 rounded-full transition-all ${k === i ? 'w-10 bg-amber' : 'w-4 bg-white/20 hover:bg-white/40'}`} aria-label={`Cita ${k + 1}`} />
             ))}
           </div>
-          <NarrateButton text={`${q.text} ${q.author}.`} id={'quote-' + i} />
+          <NarrateButton text={quoteText(q)} id={'quote-' + i} />
         </div>
         <p className="mt-8 text-xs text-dust">Citas literales de López Vigil, J. I. (1985). Una mina de coraje. ALER – Pío XII.</p>
       </div>
