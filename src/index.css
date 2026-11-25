@@ -1,77 +1,324 @@
 @import "tailwindcss";
+@import "lenis/dist/lenis.css";
+
+/* ==========================================================================
+   SISTEMA VISUAL — "La voz de la mina"
+   Regla 60 · 30 · 10
+   60 %  Carbón de socavón (fondos y superficies)
+   30 %  Estaño / papel de archivo (texto, líneas, superficies claras)
+   10 %  Ámbar de válvula (acentos, llamadas a la acción, dial)
+   Colores semánticos de uso mínimo: brasa (tragedia / en vivo) y señal (al aire)
+   ========================================================================== */
 
 @theme {
-  --color-coal-black: #141414;
-  --color-mine-dark: #222222;
-  --color-rock-gray: #333333;
-  --color-ore-gray: #6B6B6B;
-  --color-phosphor-white: #E8E8E8;
-  --color-radio-red: #E61919;
-  --color-amber-dial: #FFAA00;
-  --color-mine-green: #4AF626;
+  /* 60 % — carbón */
+  --color-ink: #0b0907;
+  --color-coal: #110e0b;
+  --color-shaft: #18140f;
+  --color-ore: #221d17;
+  --color-line: #3a3229;
 
-  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-display: 'Inter', system-ui, sans-serif;
+  /* 30 % — estaño / papel */
+  --color-bone: #ede5d3;
+  --color-tin: #bdb4a2;
+  --color-dust: #8a8170;
+
+  /* 10 % — ámbar de válvula */
+  --color-amber: #f2a541;
+  --color-amber-hi: #ffc977;
+  --color-amber-lo: #b8741f;
+
+  /* semánticos */
+  --color-ember: #e0502f;
+  --color-signal: #7be07b;
+
+  --font-display: "Fraunces Variable", "Fraunces", Georgia, serif;
+  --font-sans: "Inter Variable", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+
+  --ease-radio: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root {
-  background-color: var(--color-coal-black);
-  color: var(--color-phosphor-white);
+  color-scheme: dark;
+  background-color: var(--color-ink);
+  color: var(--color-bone);
   font-family: var(--font-sans);
-  overflow-x: hidden;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+html,
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--color-coal-black);
-  /* Subtle CRT scanline overlay */
-  background-image: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(255, 255, 255, 0.015) 2px,
-    rgba(255, 255, 255, 0.015) 4px
-  );
-  background-attachment: fixed;
+  background: var(--color-ink);
+  /* clip (y no hidden) para no crear un contenedor de scroll que rompa position: sticky */
+  overflow-x: clip;
 }
 
-/* Scrollbar */
+body {
+  min-height: 100vh;
+}
+
+/* Cursor personalizado solo en dispositivos con puntero fino */
+@media (pointer: fine) {
+  html.has-custom-cursor,
+  html.has-custom-cursor * {
+    cursor: none !important;
+  }
+}
+
+::selection {
+  background: var(--color-amber);
+  color: var(--color-ink);
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-coal-black);
+  background: var(--color-ink);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-rock-gray);
+  background: var(--color-line);
+  border: 2px solid var(--color-ink);
+  border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-ore-gray);
+  background: var(--color-amber-lo);
 }
 
-/* Brutalist zero border-radius except where explicitly needed */
-button, input, div, section, article, nav, header, footer, a, img {
-  border-radius: 0 !important;
+:focus-visible {
+  outline: 2px solid var(--color-amber);
+  outline-offset: 3px;
 }
 
-/* Global selection color */
-::selection {
-  background-color: var(--color-radio-red);
-  color: white;
-}
-
-/* Smooth scroll */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Fonts */
+/* ---------- Tipografía ---------- */
 .font-display {
-  font-family: 'Inter', system-ui, sans-serif;
-  font-weight: 900;
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 144, "SOFT" 30, "WONK" 0;
 }
-.font-mono {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+.font-display-soft {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 96, "SOFT" 100, "WONK" 1;
+}
+.text-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--color-bone) 55%, transparent);
+}
+.text-outline-amber {
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--color-amber);
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-amber);
+}
+.glow-amber {
+  text-shadow:
+    0 0 18px color-mix(in srgb, var(--color-amber) 55%, transparent),
+    0 0 60px color-mix(in srgb, var(--color-amber) 25%, transparent);
+}
+
+/* ---------- Superficies ---------- */
+.panel {
+  background: color-mix(in srgb, var(--color-shaft) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-bone) 10%, transparent);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
+}
+.hairline {
+  border-color: color-mix(in srgb, var(--color-bone) 10%, transparent);
+}
+.bg-dial-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-bone) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-bone) 5%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ---------- Grano de película y viñeta globales ---------- */
+.film-grain {
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 90;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.2 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: grain 0.9s steps(6) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-4%, 3%); }
+  40% { transform: translate(3%, -5%); }
+  60% { transform: translate(-6%, -2%); }
+  80% { transform: translate(5%, 4%); }
+  100% { transform: translate(0, 0); }
+}
+.vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 89;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+.scanlines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.035) 0px,
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* ---------- Animaciones utilitarias ---------- */
+@keyframes pulse-ring {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+.pulse-ring {
+  animation: pulse-ring 2.4s var(--ease-radio) infinite;
+}
+@keyframes blink-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.blink-soft {
+  animation: blink-soft 1.6s ease-in-out infinite;
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: marquee 60s linear infinite;
+}
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  41% { opacity: 1; }
+  42% { opacity: 0.6; }
+  43% { opacity: 1; }
+  77% { opacity: 0.9; }
+  78% { opacity: 0.45; }
+  80% { opacity: 1; }
+}
+.flicker {
+  animation: flicker 5s linear infinite;
+}
+
+@keyframes eq {
+  from { transform: scaleY(0.25); }
+  to { transform: scaleY(1); }
+}
+[style*="animation: eq"] {
+  transform-origin: bottom;
+}
+
+@keyframes flow {
+  to { stroke-dashoffset: -50; }
+}
+.anatomy-flow {
+  animation: flow 3s linear infinite;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fotografía de archivo: tono sepia-ámbar coherente con la paleta */
+.archival {
+  filter: sepia(0.55) saturate(0.85) contrast(1.08) brightness(0.88);
+  transition: filter 0.8s var(--ease-radio), transform 1.2s var(--ease-radio);
+}
+.group:hover .archival,
+.archival:hover {
+  filter: sepia(0.1) saturate(1) contrast(1.05) brightness(1);
+}
+
+/* Subrayado animado de enlaces */
+.link-underline {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.5s var(--ease-radio);
+}
+.link-underline:hover {
+  background-size: 100% 1px;
+}
+
+/* Rango (sliders) */
+input[type="range"].range-amber {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--color-amber) 0%,
+    var(--color-amber) var(--fill, 50%),
+    var(--color-line) var(--fill, 50%),
+    var(--color-line) 100%
+  );
+}
+input[type="range"].range-amber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-bone);
+  border: 3px solid var(--color-amber);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-amber) 60%, transparent);
+}
+input[type="range"].range-amber::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-bone);
+  border: 3px solid var(--color-amber);
+}
+
+/* Apagado CRT del sitio completo (despedida) */
+.crt-off {
+  animation: crt-off 1.25s cubic-bezier(0.6, 0, 0.9, 0.4) forwards;
+  transform-origin: 50% 50vh;
+}
+@keyframes crt-off {
+  0% { transform: scale(1, 1); filter: brightness(1); }
+  45% { transform: scale(1, 0.004); filter: brightness(3); }
+  100% { transform: scale(0, 0.004); filter: brightness(6); opacity: 0; }
+}
+.credits-roll {
+  animation: credits-roll 75s linear forwards;
+}
+@keyframes credits-roll {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-100% - 100vh)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .film-grain {
+    display: none;
+  }
 }
